@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.7.34031.279
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RGBtoHSV", "RGBtoHSV.csproj", "{E4BBB51C-FF39-4CC3-A9F2-AF2F85E3C365}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E4BBB51C-FF39-4CC3-A9F2-AF2F85E3C365}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E4BBB51C-FF39-4CC3-A9F2-AF2F85E3C365}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E4BBB51C-FF39-4CC3-A9F2-AF2F85E3C365}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E4BBB51C-FF39-4CC3-A9F2-AF2F85E3C365}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A6C83460-EE9D-406D-994F-20204943FC05}
+	EndGlobalSection
+EndGlobal
