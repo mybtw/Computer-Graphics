@@ -1,5 +1,4 @@
-﻿using System;
-using System.Drawing;
+﻿using System.Drawing;
 using System.Drawing.Imaging;
 
 class Program
@@ -106,4 +105,29 @@ class Program
             case 4:
                 return Color.FromArgb((int)(t * 255), (int)(p * 255), (int)(brightness * 255));
             default:
-                return Color.FromArgb((int)(brightness * 255), (int)(p * 255), (int)(q * 255
+                return Color.FromArgb((int)(brightness * 255), (int)(p * 255), (int)(q * 255));
+
+        } 
+    }
+
+    static void ModifyHSV(Bitmap hsvImage, float deltaHue, float deltaSaturation, float deltaBrightness)
+    {
+        for (int y = 0; y < hsvImage.Height; y++)
+        {
+            for (int x = 0; x < hsvImage.Width; x++)
+            {
+                Color hsvPixel = hsvImage.GetPixel(x, y);
+                float hue, saturation, brightness;
+                ColorToHSV(hsvPixel, out hue, out saturation, out brightness);
+
+                // Изменение оттенка, насыщенности и яркости
+                hue += deltaHue;
+                saturation = Math.Max(0, Math.Min(1, saturation + deltaSaturation));
+                brightness = Math.Max(0, Math.Min(1, brightness + deltaBrightness));
+
+                Color newHsvPixel = HSVToColor(hue, saturation, brightness);
+                hsvImage.SetPixel(x, y, newHsvPixel);
+            }
+        }
+    }
+}
