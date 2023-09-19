@@ -1,0 +1,11 @@
+C:\CG\Lesson2_task2\bin\Debug\Lesson2_task2.exe.config
+C:\CG\Lesson2_task2\bin\Debug\Lesson2_task2.exe
+C:\CG\Lesson2_task2\bin\Debug\Lesson2_task2.pdb
+C:\CG\Lesson2_task2\obj\Debug\Lesson2_task2.csproj.AssemblyReference.cache
+C:\CG\Lesson2_task2\obj\Debug\Lesson2_task2.csproj.SuggestedBindingRedirects.cache
+C:\CG\Lesson2_task2\obj\Debug\Lesson2_task2.Properties.Resources.resources
+C:\CG\Lesson2_task2\obj\Debug\Lesson2_task2.csproj.GenerateResource.cache
+C:\CG\Lesson2_task2\obj\Debug\Lesson2_task2.csproj.CoreCompileInputs.cache
+C:\CG\Lesson2_task2\obj\Debug\Lesson2_task2.exe
+C:\CG\Lesson2_task2\obj\Debug\Lesson2_task2.pdb
+C:\CG\Lesson2_task2\obj\Debug\Lesson2_task2.Form1.resources
