@@ -9,3 +9,14 @@ C:\CG\Lesson2_task2\obj\Debug\Lesson2_task2.csproj.CoreCompileInputs.cache
 C:\CG\Lesson2_task2\obj\Debug\Lesson2_task2.exe
 C:\CG\Lesson2_task2\obj\Debug\Lesson2_task2.pdb
 C:\CG\Lesson2_task2\obj\Debug\Lesson2_task2.Form1.resources
+C:\Users\user\Source\Repos\Computer-Graphics\lab2\task2\bin\Debug\Lesson2_task2.exe.config
+C:\Users\user\Source\Repos\Computer-Graphics\lab2\task2\bin\Debug\Lesson2_task2.exe
+C:\Users\user\Source\Repos\Computer-Graphics\lab2\task2\bin\Debug\Lesson2_task2.pdb
+C:\Users\user\Source\Repos\Computer-Graphics\lab2\task2\obj\Debug\Lesson2_task2.csproj.AssemblyReference.cache
+C:\Users\user\Source\Repos\Computer-Graphics\lab2\task2\obj\Debug\Lesson2_task2.csproj.SuggestedBindingRedirects.cache
+C:\Users\user\Source\Repos\Computer-Graphics\lab2\task2\obj\Debug\Lesson2_task2.Form1.resources
+C:\Users\user\Source\Repos\Computer-Graphics\lab2\task2\obj\Debug\Lesson2_task2.Properties.Resources.resources
+C:\Users\user\Source\Repos\Computer-Graphics\lab2\task2\obj\Debug\Lesson2_task2.csproj.GenerateResource.cache
+C:\Users\user\Source\Repos\Computer-Graphics\lab2\task2\obj\Debug\Lesson2_task2.csproj.CoreCompileInputs.cache
+C:\Users\user\Source\Repos\Computer-Graphics\lab2\task2\obj\Debug\Lesson2_task2.exe
+C:\Users\user\Source\Repos\Computer-Graphics\lab2\task2\obj\Debug\Lesson2_task2.pdb
