@@ -20,7 +20,7 @@ namespace lab6
         {
                 {1, 0, 0, 0 },
                 {0, 1, 0, 0 },
-                { 0, 0, 0, k},
+                { 0, 0, 0, -k},
                 { 0, 0, 0, 1}
         });
         // вид аксонометрической проекции (вид будто пользователь смотрит в 1 октант)
@@ -70,13 +70,13 @@ namespace lab6
             {
                 Matrix<double> oldCoords = Matrix<double>.Build.DenseOfArray(new double[,] { { Xf, Yf, Zf, 1 } });
                 Matrix<double> res = (oldCoords * centralProjectionMatrix).Multiply(1 / (k * Zf + 1));
-                return new PointF(worldCenter.X + (float)res[0, 0], worldCenter.Y + (float)res[0, 1]);
+                return new PointF(worldCenter.X + 150 + (float)res[0, 0], worldCenter.Y + (float)res[0, 1]);
             }
             else 
             {
                 Matrix<double> oldCoords = Matrix<double>.Build.DenseOfArray(new double[,] { { Xf }, { Yf }, { Zf } });
                 Matrix<double> res = utilMatr * isometricProjectionMatrix * oldCoords;
-                return new PointF(worldCenter.X + (float)res[0,0], worldCenter.Y + (float)res[1,0]);
+                return new PointF(worldCenter.X + 150 + (float)res[0,0], worldCenter.Y + (float)res[1,0]);
             }
         }
     }
@@ -170,9 +170,9 @@ namespace lab6
         {
             Tetrahedron res = new Tetrahedron();
             Point a = new Point(0, 0, 0);
-            Point c = new Point(200, 0, 200);
-            Point f = new Point(200, 200, 0);
-            Point h = new Point(0, 200, 200);
+            Point c = new Point(150, 0, 150);
+            Point f = new Point(150, 150, 0);
+            Point h = new Point(0, 150, 150);
             res.addFace(new Face().addEdge(new Line(a, f)).addEdge(new Line(f, c)).addEdge(new Line(c, a)));
             res.addFace(new Face().addEdge(new Line(f, c)).addEdge(new Line(c, h)).addEdge(new Line(h, f)));
             res.addFace(new Face().addEdge(new Line(c, h)).addEdge(new Line(h, a)).addEdge(new Line(a, c)));
@@ -214,13 +214,13 @@ namespace lab6
         {
             Hexahedron res = new Hexahedron();
             Point a = new Point(0, 0, 0);
-            Point b = new Point(200, 0, 0);
-            Point c = new Point(200, 0, 200);
-            Point d = new Point(0, 0, 200);
-            Point e = new Point(0, 200, 0);
-            Point f = new Point(200, 200, 0);
-            Point g = new Point(200, 200, 200);
-            Point h = new Point(0, 200, 200);
+            Point b = new Point(150, 0, 0);
+            Point c = new Point(150, 0, 150);
+            Point d = new Point(0, 0, 150);
+            Point e = new Point(0, 150, 0);
+            Point f = new Point(150, 150, 0);
+            Point g = new Point(150, 150, 150);
+            Point h = new Point(0, 150, 150);
             res.addFace(new Face().addEdge(new Line(a, b)).addEdge(new Line(b, c)).addEdge(new Line(c, d)).addEdge(new Line(d, a)));
             res.addFace(new Face().addEdge(new Line(b, c)).addEdge(new Line(c, g)).addEdge(new Line(g, f)).addEdge(new Line(f, b)));
             res.addFace(new Face().addEdge(new Line(f, g)).addEdge(new Line(g, h)).addEdge(new Line(h, e)).addEdge(new Line(e, f)));
