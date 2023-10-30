@@ -1,4 +1,7 @@
 using MathNet.Numerics.LinearAlgebra;
+using static System.Collections.Specialized.BitVector32;
+using System.Drawing;
+using System.Numerics;
 
 namespace lab6
 {
@@ -8,6 +11,16 @@ namespace lab6
         Bitmap bmp;
         List<Shape> figures;
         Shape figure;
+
+        Point firstPoint;
+        Point secondPoint;
+        Line linse;
+        private class Section
+        {
+            public Point leftP, rightP;
+            public Section() { }
+            public Section(Point l, Point r) { leftP = l; rightP = r; }
+        }
 
         public Form1()
         {
@@ -33,6 +46,7 @@ namespace lab6
             numericUpDown2.Maximum = 200;
             numericUpDown3.Maximum = 200;
             numericUpDown4.Maximum = 200;
+            pictureBox1.MouseDown += new MouseEventHandler(pictureBox1_MouseDown);
             clearScene();
 
         }
@@ -45,7 +59,7 @@ namespace lab6
                 comboBox1.Items.Add(item);
             }
         }
-   
+
 
         public void clearScene()
         {
@@ -61,7 +75,7 @@ namespace lab6
             {
                 draw(fig);
             }*/
-           
+
         }
 
         private void draw(Shape figure)
@@ -161,15 +175,15 @@ namespace lab6
         }
         private void button3_Click(object sender, EventArgs e)
         {
-                // Считывание координат X, Y и Z из текстовых полей
-                double offsetX = double.Parse(textBox1.Text);
-                double offsetY = double.Parse(textBox2.Text);
-                double offsetZ = double.Parse(textBox3.Text);
+            // Считывание координат X, Y и Z из текстовых полей
+            double offsetX = double.Parse(textBox1.Text);
+            double offsetY = double.Parse(textBox2.Text);
+            double offsetZ = double.Parse(textBox3.Text);
 
             GetScaleMatrix(offsetX, offsetY, offsetZ);
             redraw();
-
         }
+
         // Метод для умножения матрицы на точку
         Point ApplyMatrix(double[,] matrix, Point point)
         {
@@ -356,6 +370,214 @@ namespace lab6
             double scaleFactor = (double)numericUpDown4.Value / 100;
             GetRotationMatrixRelativeCenter(scaleFactor);
             redraw();
+        }
+
+        private void RotateAroundX(double rotationAngleDegrees)
+        {
+            Point center = CalculateCenter(); // Найдите центр многогранника
+            double angle = Math.PI / 180.0 * rotationAngleDegrees; // Угол в радианах
+            double cos = Math.Cos(angle);
+            double sin = Math.Sin(angle);
+            double[,] rotationMatrixX = new double[,]
+            {
+        { 1, 0, 0, 0 },
+        { 0, cos, -sin, 0 },
+        { 0, sin, cos, 0 },
+        { 0, 0, 0, 1 }
+            };
+
+            foreach (var face in figure.Faces)
+            {
+                foreach (var line in face.Edges)
+                {
+                    line.start = ApplyMatrix(rotationMatrixX, line.start - center) + center;
+                    line.end = ApplyMatrix(rotationMatrixX, line.end - center) + center;
+                }
+            }
+
+            redraw();
+        }
+
+        private void RotateAroundY(double rotationAngleDegrees)
+        {
+            Point center = CalculateCenter(); // Найдите центр многогранника
+            double angle = Math.PI / 180.0 * rotationAngleDegrees; // Угол в радианах
+            double cos = Math.Cos(angle);
+            double sin = Math.Sin(angle);
+            double[,] rotationMatrixY = new double[,]
+            {
+        { cos, 0, sin, 0 },
+        { 0, 1, 0, 0 },
+        { -sin, 0, cos, 0 },
+        { 0, 0, 0, 1 }
+            };
+
+            foreach (var face in figure.Faces)
+            {
+                foreach (var line in face.Edges)
+                {
+                    line.start = ApplyMatrix(rotationMatrixY, line.start - center) + center;
+                    line.end = ApplyMatrix(rotationMatrixY, line.end - center) + center;
+                }
+            }
+
+            redraw();
+        }
+
+        private void RotateAroundZ(double rotationAngleDegrees)
+        {
+            Point center = CalculateCenter(); // Найдите центр многогранника
+            double angle = Math.PI / 180.0 * rotationAngleDegrees; // Угол в радианах
+            double cos = Math.Cos(angle);
+            double sin = Math.Sin(angle);
+            double[,] rotationMatrixZ = new double[,]
+            {
+        { cos, -sin, 0, 0 },
+        { sin, cos, 0, 0 },
+        { 0, 0, 1, 0 },
+        { 0, 0, 0, 1 }
+            };
+
+            foreach (var face in figure.Faces)
+            {
+                foreach (var line in face.Edges)
+                {
+                    line.start = ApplyMatrix(rotationMatrixZ, line.start - center) + center;
+                    line.end = ApplyMatrix(rotationMatrixZ, line.end - center) + center;
+                }
+            }
+
+            redraw();
+        }
+
+
+        private void button7_Click(object sender, EventArgs e)
+        {
+            foreach (var face in figure.Faces)
+            {
+                foreach (var line in face.Edges)
+                {
+                    // Отражение относительно плоскости XY
+                    line.start.Z = -line.start.Z;
+                    line.end.Z = -line.end.Z;
+                }
+            }
+
+            redraw();
+        }
+
+        private void button8_Click(object sender, EventArgs e)
+        {
+            foreach (var face in figure.Faces)
+            {
+                foreach (var line in face.Edges)
+                {
+                    // Отражение относительно плоскости XZ
+                    line.start.Y = -line.start.Y;
+                    line.end.Y = -line.end.Y;
+                }
+            }
+
+            redraw();
+        }
+
+        private void button9_Click(object sender, EventArgs e)
+        {
+            foreach (var face in figure.Faces)
+            {
+                foreach (var line in face.Edges)
+                {
+                    // Отражение относительно плоскости YZ
+                    line.start.X = -line.start.X;
+                    line.end.X = -line.end.X;
+                }
+            }
+
+            redraw();
+        }
+
+        private void button10_Click(object sender, EventArgs e)
+        {
+            double degree = (double)numericUpDown5.Value;
+            RotateAroundX(degree);
+        }
+
+        private void button11_Click(object sender, EventArgs e)
+        {
+            double degree = (double)numericUpDown5.Value;
+            RotateAroundY(degree);
+        }
+
+        private void button12_Click(object sender, EventArgs e)
+        {
+            double degree = (double)numericUpDown5.Value;
+            RotateAroundZ(degree);
+        }
+
+
+        private Point ConvertScreenTo3D(int screenX, int screenY)
+        {
+            return new Point(screenX, screenY, 0);
+        }
+
+        private void pictureBox1_MouseDown(object sender, MouseEventArgs e)
+        {
+            int mouseX = e.X;
+            int mouseY = e.Y;
+
+            Point clickedPoint = ConvertScreenTo3D(mouseX, mouseY);
+
+            if (firstPoint == null)
+            {
+                firstPoint = clickedPoint;
+            }
+            else
+            {
+                secondPoint = clickedPoint;
+                linse = new Line(firstPoint, secondPoint);
+                Pen pen = new Pen(Color.Black, 3);
+                drawLine(linse, pen);
+                pictureBox1.Invalidate();
+                firstPoint = null;
+            }
+        }
+
+        private void RotateShapeAroundLine(Point point1, Point point2, double angleDegrees)
+        {
+            double angleRadians = Funcs.degreesToRadians(angleDegrees);
+
+            double cosAngle = Math.Cos(angleRadians);
+            double sinAngle = Math.Sin(angleRadians);
+
+            foreach (Face face in figure.Faces)
+            {
+                foreach (Line line in face.Edges)
+                {
+                    Point relativeStart = line.start - point2;
+                    Point relativeEnd = line.end - point2;
+
+                    // Поворот относительных координат
+                    double newXStart = relativeStart.Xf * cosAngle - relativeStart.Yf * sinAngle;
+                    double newYStart = relativeStart.Xf * sinAngle + relativeStart.Yf * cosAngle;
+
+                    double newXEnd = relativeEnd.Xf * cosAngle - relativeEnd.Yf * sinAngle;
+                    double newYEnd = relativeEnd.Xf * sinAngle + relativeEnd.Yf * cosAngle;
+
+                    // Возврат точек в абсолютные координаты
+                    line.start = new Point(newXStart, newYStart, relativeStart.Zf) + point2;
+                    line.end = new Point(newXEnd, newYEnd, relativeEnd.Zf) + point2;
+                }
+            }
+        }
+
+
+        private void button13_Click(object sender, EventArgs e)
+        {
+            double degree = (double)numericUpDown5.Value;
+            RotateShapeAroundLine(linse.start, linse.end, degree);
+            redraw();
+            Pen pen = new Pen(Color.Black, 3);
+            drawLine(linse, pen);
         }
     }
 }
