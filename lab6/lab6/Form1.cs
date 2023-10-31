@@ -71,7 +71,7 @@ namespace lab6
         {
             clearScene();
             draw(figure);
-            if (linse.start != null && linse.end != null)
+            if (linse != null && linse.start != null && linse.end != null)
             {
                 Pen pen = new Pen(Color.Black, 3);
                 drawLine(linse, pen);
@@ -93,7 +93,7 @@ namespace lab6
         {
             clearScene();
             draw();
-            if (linse.start != null && linse.end != null)
+            if (linse != null && linse.start != null && linse.end != null)
             {
                 Pen pen = new Pen(Color.Black, 3);
                 drawLine(linse, pen);
@@ -583,9 +583,11 @@ namespace lab6
         private void button13_Click(object sender, EventArgs e)
         {
             double degree = (double)numericUpDown5.Value;
-            RotateShapeAroundLine(linse.start, linse.end, degree);
-            redraw();
-            
+            if (linse != null)
+            {
+                RotateShapeAroundLine(linse.start, linse.end, degree);
+                redraw();
+            }
         }
     }
 }
