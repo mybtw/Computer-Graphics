@@ -73,6 +73,7 @@
             textBox11 = new TextBox();
             textBox12 = new TextBox();
             button14 = new Button();
+            label11 = new Label();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)numericUpDown1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)numericUpDown2).BeginInit();
@@ -120,7 +121,7 @@
             // radioButton1
             // 
             radioButton1.AutoSize = true;
-            radioButton1.Location = new System.Drawing.Point(117, 535);
+            radioButton1.Location = new System.Drawing.Point(99, 535);
             radioButton1.Name = "radioButton1";
             radioButton1.Size = new Size(137, 24);
             radioButton1.TabIndex = 4;
@@ -132,7 +133,7 @@
             // radioButton2
             // 
             radioButton2.AutoSize = true;
-            radioButton2.Location = new System.Drawing.Point(117, 565);
+            radioButton2.Location = new System.Drawing.Point(99, 568);
             radioButton2.Name = "radioButton2";
             radioButton2.Size = new Size(170, 24);
             radioButton2.TabIndex = 5;
@@ -406,7 +407,7 @@
             // 
             button13.Location = new System.Drawing.Point(656, 568);
             button13.Name = "button13";
-            button13.Size = new Size(276, 30);
+            button13.Size = new Size(276, 44);
             button13.TabIndex = 19;
             button13.Text = "Повернуть вокруг линии";
             button13.UseVisualStyleBackColor = true;
@@ -488,11 +489,21 @@
             button14.UseVisualStyleBackColor = true;
             button14.Click += button14_Click;
             // 
+            // label11
+            // 
+            label11.AutoSize = true;
+            label11.Location = new System.Drawing.Point(354, 592);
+            label11.Name = "label11";
+            label11.Size = new Size(144, 20);
+            label11.TabIndex = 29;
+            label11.Text = "Координаты линии";
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(947, 607);
+            ClientSize = new Size(947, 616);
+            Controls.Add(label11);
             Controls.Add(button14);
             Controls.Add(textBox12);
             Controls.Add(textBox11);
@@ -598,5 +609,6 @@
         private TextBox textBox11;
         private TextBox textBox12;
         private Button button14;
+        private Label label11;
     }
 }
