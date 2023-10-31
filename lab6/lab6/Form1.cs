@@ -71,6 +71,11 @@ namespace lab6
         {
             clearScene();
             draw(figure);
+            if (linse.start != null && linse.end != null)
+            {
+                Pen pen = new Pen(Color.Black, 3);
+                drawLine(linse, pen);
+            }
             /*foreach (var fig in figures)
             {
                 draw(fig);
@@ -88,7 +93,11 @@ namespace lab6
         {
             clearScene();
             draw();
-
+            if (linse.start != null && linse.end != null)
+            {
+                Pen pen = new Pen(Color.Black, 3);
+                drawLine(linse, pen);
+            }
         }
 
 
@@ -576,8 +585,7 @@ namespace lab6
             double degree = (double)numericUpDown5.Value;
             RotateShapeAroundLine(linse.start, linse.end, degree);
             redraw();
-            Pen pen = new Pen(Color.Black, 3);
-            drawLine(linse, pen);
+            
         }
     }
 }
