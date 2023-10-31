@@ -66,6 +66,13 @@
             button13 = new Button();
             label9 = new Label();
             label10 = new Label();
+            textBox7 = new TextBox();
+            textBox8 = new TextBox();
+            textBox9 = new TextBox();
+            textBox10 = new TextBox();
+            textBox11 = new TextBox();
+            textBox12 = new TextBox();
+            button14 = new Button();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)numericUpDown1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)numericUpDown2).BeginInit();
@@ -423,11 +430,76 @@
             label10.TabIndex = 21;
             label10.Text = "Вращение относительно оси";
             // 
+            // textBox7
+            // 
+            textBox7.Location = new System.Drawing.Point(328, 534);
+            textBox7.Name = "textBox7";
+            textBox7.Size = new Size(57, 27);
+            textBox7.TabIndex = 22;
+            textBox7.Text = "0";
+            // 
+            // textBox8
+            // 
+            textBox8.Location = new System.Drawing.Point(391, 534);
+            textBox8.Name = "textBox8";
+            textBox8.Size = new Size(57, 27);
+            textBox8.TabIndex = 23;
+            textBox8.Text = "0";
+            // 
+            // textBox9
+            // 
+            textBox9.Location = new System.Drawing.Point(454, 534);
+            textBox9.Name = "textBox9";
+            textBox9.Size = new Size(57, 27);
+            textBox9.TabIndex = 24;
+            textBox9.Text = "0";
+            // 
+            // textBox10
+            // 
+            textBox10.Location = new System.Drawing.Point(328, 562);
+            textBox10.Name = "textBox10";
+            textBox10.Size = new Size(57, 27);
+            textBox10.TabIndex = 25;
+            textBox10.Text = "0";
+            // 
+            // textBox11
+            // 
+            textBox11.Location = new System.Drawing.Point(391, 562);
+            textBox11.Name = "textBox11";
+            textBox11.Size = new Size(57, 27);
+            textBox11.TabIndex = 26;
+            textBox11.Text = "0";
+            // 
+            // textBox12
+            // 
+            textBox12.Location = new System.Drawing.Point(454, 562);
+            textBox12.Name = "textBox12";
+            textBox12.Size = new Size(57, 27);
+            textBox12.TabIndex = 27;
+            textBox12.Text = "0";
+            // 
+            // button14
+            // 
+            button14.Location = new System.Drawing.Point(517, 534);
+            button14.Name = "button14";
+            button14.Size = new Size(133, 55);
+            button14.TabIndex = 28;
+            button14.Text = "Задать линию";
+            button14.UseVisualStyleBackColor = true;
+            button14.Click += button14_Click;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(947, 607);
+            Controls.Add(button14);
+            Controls.Add(textBox12);
+            Controls.Add(textBox11);
+            Controls.Add(textBox10);
+            Controls.Add(textBox9);
+            Controls.Add(textBox8);
+            Controls.Add(textBox7);
             Controls.Add(label10);
             Controls.Add(label9);
             Controls.Add(button13);
@@ -519,5 +591,12 @@
         private Button button13;
         private Label label9;
         private Label label10;
+        private TextBox textBox7;
+        private TextBox textBox8;
+        private TextBox textBox9;
+        private TextBox textBox10;
+        private TextBox textBox11;
+        private TextBox textBox12;
+        private Button button14;
     }
 }

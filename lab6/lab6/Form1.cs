@@ -70,7 +70,7 @@ namespace lab6
         public void redraw()
         {
             clearScene();
-            draw(figure);
+            if (figure != null) { draw(figure); }
             if (linse != null && linse.start != null && linse.end != null)
             {
                 Pen pen = new Pen(Color.Black, 3);
@@ -158,6 +158,7 @@ namespace lab6
         private void button2_Click(object sender, EventArgs e)
         {
             figures.Clear();
+            linse = null;
             clearScene();
         }
         private double[,] GetScaleMatrix(double x, double y, double z)
@@ -531,24 +532,24 @@ namespace lab6
 
         private void pictureBox1_MouseDown(object sender, MouseEventArgs e)
         {
-            int mouseX = e.X;
-            int mouseY = e.Y;
+            //int mouseX = e.X;
+            //int mouseY = e.Y;
 
-            Point clickedPoint = ConvertScreenTo3D(mouseX, mouseY);
+            //Point clickedPoint = ConvertScreenTo3D(mouseX, mouseY);
 
-            if (firstPoint == null)
-            {
-                firstPoint = clickedPoint;
-            }
-            else
-            {
-                secondPoint = clickedPoint;
-                linse = new Line(firstPoint, secondPoint);
-                Pen pen = new Pen(Color.Black, 3);
-                drawLine(linse, pen);
-                pictureBox1.Invalidate();
-                firstPoint = null;
-            }
+            //if (firstPoint == null)
+            //{
+            //    firstPoint = clickedPoint;
+            //}
+            //else
+            //{
+            //    secondPoint = clickedPoint;
+            //    linse = new Line(firstPoint, secondPoint);
+            //    Pen pen = new Pen(Color.Black, 3);
+            //    drawLine(linse, pen);
+            //    pictureBox1.Invalidate();
+            //    firstPoint = null;
+            //}
         }
 
         private void RotateShapeAroundLine(Point point1, Point point2, double angleDegrees)
@@ -588,6 +589,14 @@ namespace lab6
                 RotateShapeAroundLine(linse.start, linse.end, degree);
                 redraw();
             }
+        }
+
+        private void button14_Click(object sender, EventArgs e)
+        {
+            Point start = new Point(int.Parse(textBox7.Text), int.Parse(textBox8.Text), int.Parse(textBox9.Text));
+            Point end = new Point(int.Parse(textBox10.Text), int.Parse(textBox11.Text), int.Parse(textBox12.Text));
+            linse = new Line(start, end);
+            redraw();
         }
     }
 }
