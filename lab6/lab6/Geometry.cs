@@ -24,12 +24,20 @@ namespace lab6
                 { 0, 0, 0, 1}
         });
         // вид аксонометрической проекции (вид будто пользователь смотрит в 1 октант)
+        /* Matrix<double> isometricProjectionMatrix = Matrix<double>.Build.DenseOfArray(new double[,]
+         {
+                 {Math.Sqrt(3), 0, -Math.Sqrt(3)},
+                 {1, 2, 1},
+                 { Math.Sqrt(2), -Math.Sqrt(2), Math.Sqrt(2)},
+         }).Multiply(1 / Math.Sqrt(6));*/
+
         Matrix<double> isometricProjectionMatrix = Matrix<double>.Build.DenseOfArray(new double[,]
-        {
-                {Math.Sqrt(3), 0, -Math.Sqrt(3)},
-                {1, 2, 1},
-                { Math.Sqrt(2), -Math.Sqrt(2), Math.Sqrt(2)},
-        }).Multiply(1 / Math.Sqrt(6));
+{
+                {1, 0, 0, 0 },
+                {0, 1, 0, 0 },
+                { 0, 0, 0, 0},
+                { 0, 0, 0, 1}
+});
 
         Matrix<double> utilMatr = Matrix<double>.Build.DenseOfArray(new double[,]
         {
@@ -38,12 +46,12 @@ namespace lab6
                     {0, 0, 0}
         });
 
-        public Point(int x, int y, int z)
-        {
-            this.x = x;
-            this.y = y;
-            this.z = z;
-        }
+        //public Point(int x, int y, int z)
+        //{
+        //    this.x = x;
+        //    this.y = y;
+        //    this.z = z;
+        //}
 
         public Point(double x, double y, double z)
         {
@@ -53,9 +61,9 @@ namespace lab6
         }
 
 
-        public int X { get => (int)x; set => x = value; }
-        public int Y { get => (int)y; set => y = value; }
-        public int Z { get => (int)z; set => z = value; }
+        public double X { get => x; set => x = value; }
+        public double Y { get => y; set => y = value; }
+        public double Z { get => z; set => z = value; }
 
         public double Xf { get => x; set => x = value; }
         public double Yf { get => y; set => y = value; }
@@ -72,11 +80,16 @@ namespace lab6
                 Matrix<double> res = (oldCoords * centralProjectionMatrix).Multiply(1 / (k * Zf + 1));
                 return new PointF(worldCenter.X + 150 + (float)res[0, 0], worldCenter.Y + (float)res[0, 1]);
             }
-            else 
+            else
             {
-                Matrix<double> oldCoords = Matrix<double>.Build.DenseOfArray(new double[,] { { Xf }, { Yf }, { Zf } });
-                Matrix<double> res = utilMatr * isometricProjectionMatrix * oldCoords;
-                return new PointF(worldCenter.X + 150 + (float)res[0,0], worldCenter.Y + (float)res[1,0]);
+                /*   Matrix<double> oldCoords = Matrix<double>.Build.DenseOfArray(new double[,] { { Xf }, { Yf }, { Zf } });
+                   Matrix<double> res = utilMatr * isometricProjectionMatrix * oldCoords;
+                   return new PointF(worldCenter.X + 150 + (float)res[0,0], worldCenter.Y + (float)res[1,0]);*/
+                // return new PointF(worldCenter.X + 150 + (float)Xf, worldCenter.Y + (float)Yf);
+
+                Matrix<double> oldCoords = Matrix<double>.Build.DenseOfArray(new double[,] { { Xf, Yf, Zf, 1 } });
+                Matrix<double> res = (oldCoords * isometricProjectionMatrix);
+                return new PointF(worldCenter.X + 150 + (float)res[0, 0], worldCenter.Y + (float)res[0, 1]);
             }
         }
         public static Point operator -(Point a, Point b)
@@ -293,16 +306,16 @@ namespace lab6
                 centers.Add(c);
             }
 
-            for (int i = 0; i < 10; i++)
-            {
-                if (i % 2 == 0)
-                {
-                    res.addFace(new Face().addEdge(new Line(centers[i], centers[(i + 1) % 10])).addEdge(new Line(centers[(i + 1) % 10], centers[(i + 2) % 10])).addEdge(new Line(centers[(i + 2) % 10], centers[15 + (i / 2 + 1) % 5])).addEdge(new Line(centers[15 + (i / 2 + 1) % 5], centers[15 + i / 2])).addEdge(new Line(centers[15 + i / 2], centers[i])));
-
-                    continue;
-                }
-                res.addFace(new Face().addEdge(new Line(centers[i], centers[(i + 1) % 10])).addEdge(new Line(centers[(i + 1) % 10], centers[(i + 2) % 10])).addEdge(new Line(centers[(i + 2) % 10], centers[10 + (i / 2 + 1) % 5])).addEdge(new Line(centers[10 + (i / 2 + 1) % 5], centers[10 + i / 2])).addEdge(new Line(centers[10 + i / 2], centers[i])));
-            }
+            res.addFace(new Face().addEdge(new Line(centers[0], centers[1])).addEdge(new Line(centers[1], centers[2])).addEdge(new Line(centers[2], centers[16])).addEdge(new Line(centers[16], centers[15])).addEdge(new Line(centers[15], centers[0])));
+            res.addFace(new Face().addEdge(new Line(centers[1], centers[2])).addEdge(new Line(centers[2], centers[3])).addEdge(new Line(centers[3], centers[11])).addEdge(new Line(centers[11], centers[10])).addEdge(new Line(centers[10], centers[1])));
+            res.addFace(new Face().addEdge(new Line(centers[2], centers[3])).addEdge(new Line(centers[3], centers[4])).addEdge(new Line(centers[4], centers[17])).addEdge(new Line(centers[17], centers[16])).addEdge(new Line(centers[16], centers[2])));
+            res.addFace(new Face().addEdge(new Line(centers[3], centers[4])).addEdge(new Line(centers[4], centers[5])).addEdge(new Line(centers[5], centers[12])).addEdge(new Line(centers[12], centers[11])).addEdge(new Line(centers[11], centers[3])));
+            res.addFace(new Face().addEdge(new Line(centers[4], centers[5])).addEdge(new Line(centers[5], centers[6])).addEdge(new Line(centers[6], centers[18])).addEdge(new Line(centers[18], centers[17])).addEdge(new Line(centers[17], centers[4])));
+            res.addFace(new Face().addEdge(new Line(centers[5], centers[6])).addEdge(new Line(centers[6], centers[7])).addEdge(new Line(centers[7], centers[13])).addEdge(new Line(centers[13], centers[12])).addEdge(new Line(centers[12], centers[5])));
+            res.addFace(new Face().addEdge(new Line(centers[6], centers[7])).addEdge(new Line(centers[7], centers[8])).addEdge(new Line(centers[8], centers[19])).addEdge(new Line(centers[19], centers[18])).addEdge(new Line(centers[18], centers[6])));
+            res.addFace(new Face().addEdge(new Line(centers[7], centers[8])).addEdge(new Line(centers[8], centers[9])).addEdge(new Line(centers[9], centers[14])).addEdge(new Line(centers[14], centers[13])).addEdge(new Line(centers[13], centers[7])));
+            res.addFace(new Face().addEdge(new Line(centers[8], centers[9])).addEdge(new Line(centers[9], centers[0])).addEdge(new Line(centers[0], centers[15])).addEdge(new Line(centers[15], centers[19])).addEdge(new Line(centers[19], centers[8])));
+            res.addFace(new Face().addEdge(new Line(centers[9], centers[0])).addEdge(new Line(centers[0], centers[1])).addEdge(new Line(centers[1], centers[10])).addEdge(new Line(centers[10], centers[14])).addEdge(new Line(centers[14], centers[9])));
             res.addFace(new Face().addEdge(new Line(centers[15], centers[16])).addEdge(new Line(centers[16], centers[17])).addEdge(new Line(centers[17], centers[18])).addEdge(new Line(centers[18], centers[19])).addEdge(new Line(centers[19], centers[15])));
             res.addFace(new Face().addEdge(new Line(centers[10], centers[11])).addEdge(new Line(centers[11], centers[12])).addEdge(new Line(centers[12], centers[13])).addEdge(new Line(centers[13], centers[14])).addEdge(new Line(centers[14], centers[10])));
 
