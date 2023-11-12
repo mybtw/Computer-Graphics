@@ -1,11 +1,9 @@
-using MathNet.Numerics.LinearAlgebra;
-using static System.Collections.Specialized.BitVector32;
-using System.Drawing;
-using System.Numerics;
-using System.IO;
-using System.Runtime.Serialization;
-using System.Runtime.Serialization.Formatters.Binary;
-using Newtonsoft.Json;
+using Microsoft.CSharp;
+using System.CodeDom.Compiler;
+using System.Data;
+using System.Linq.Expressions;
+using NCalc;
+using Expression = NCalc.Expression;
 
 namespace lab6
 {
@@ -66,6 +64,8 @@ namespace lab6
         public void clearScene()
         {
             g.Clear(Color.White);
+            figures.Clear();
+            linse = null;
             pictureBox1.Invalidate();
         }
 
@@ -186,13 +186,13 @@ namespace lab6
         }
         private void button3_Click(object sender, EventArgs e)
         {
-            // —читывание координат X, Y и Z из текстовых полей
             double offsetX = double.Parse(textBox1.Text);
             double offsetY = double.Parse(textBox2.Text);
             double offsetZ = double.Parse(textBox3.Text);
 
             GetScaleMatrix(offsetX, offsetY, offsetZ);
             redraw();
+
         }
 
         // ћетод дл€ умножени€ матрицы на точку
@@ -616,7 +616,7 @@ namespace lab6
 
         private void LoadFromFile(string filePath)
         {
-            figure = new Shape(); 
+            figure = new Shape();
             using (StreamReader reader = new StreamReader(filePath))
             {
                 Face currentFace = new Face();
@@ -643,7 +643,7 @@ namespace lab6
                 }
             }
 
-            redraw(); 
+            redraw();
         }
 
         private void loadButton_Click(object sender, EventArgs e)
@@ -667,6 +667,76 @@ namespace lab6
                 string fName = saveFileDialog1.FileName;
                 SaveToFile(fName);
             }
+        }
+
+
+        Shape BuildSurface(Func<double, double, double> f, double x0, double x1, double y0, double y1, int stepsX, int stepsY)
+        {
+            Shape surface = new Shape();
+
+            double stepX = (x1 - x0) / stepsX;
+            double stepY = (y1 - y0) / stepsY;
+
+            for (int i = 0; i < stepsX; i++)
+            {
+                for (int j = 0; j < stepsY; j++)
+                {
+                    double x = x0 + i * stepX;
+                    double y = y0 + j * stepY;
+                    double z = f(x, y);
+
+                    Point p1 = new Point(x, y, z);
+                    Point p2 = new Point(x + stepX, y, f(x + stepX, y));
+                    Point p3 = new Point(x + stepX, y + stepY, f(x + stepX, y + stepY));
+                    Point p4 = new Point(x, y + stepY, f(x, y + stepY));
+
+                    Face face = new Face();
+                    face.addEdge(new Line(p1, p2))
+                        .addEdge(new Line(p2, p3))
+                        .addEdge(new Line(p3, p4))
+                        .addEdge(new Line(p4, p1));
+
+                    surface.addFace(face);
+                }
+            }
+
+            return surface;
+        }
+
+
+        double SinCos(double x, double y)
+        {
+            return Math.Sin(x) + Math.Cos(y);
+        }
+
+        static double EvaluateExpression(string expression, double x, double y)
+        {
+            // —оздаем экземпл€р NCalc Expression
+            Expression exp = new Expression(expression);
+
+            exp.Parameters["x"] = x;
+            exp.Parameters["y"] = y;
+
+            object result = exp.Evaluate();
+
+            return Convert.ToDouble(result);
+        }
+
+        private void button15_Click(object sender, EventArgs e)
+        {
+            double x0 = double.Parse(textBox14.Text);
+            double x1 = double.Parse(textBox13.Text);
+            double y0 = double.Parse(textBox15.Text);
+            double y1 = double.Parse(textBox16.Text);
+            int stepsX = int.Parse(textBox17.Text);
+            int stepsY = int.Parse(textBox18.Text);
+            string expression = textBox19.Text;
+            Func<double, double, double> Func = (x, y) => EvaluateExpression(expression, x, y);
+
+            figure = BuildSurface(Func, x0, x1, y0, y1, stepsX, stepsY);
+            drawShape(figure);
+            figures.Add(figure);
+            redraw();
         }
 
 
