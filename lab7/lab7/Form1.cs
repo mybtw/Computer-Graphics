@@ -4,6 +4,7 @@ using System.Data;
 using System.Linq.Expressions;
 using NCalc;
 using Expression = NCalc.Expression;
+using MathNet.Numerics.LinearAlgebra;
 
 namespace lab6
 {
@@ -13,6 +14,12 @@ namespace lab6
         Bitmap bmp;
         List<Shape> figures;
         Shape figure;
+        String axis;
+        int divs;
+        int z;
+
+        private List<PointF> points = new List<PointF>();
+        Pen pen = new Pen(Color.Black, 2);
 
         Line linse;
         private class Section
@@ -26,6 +33,7 @@ namespace lab6
         {
             InitializeComponent();
             AddItemsToComboBox1();
+            AddItemsToComboBox2();
             bmp = new Bitmap(pictureBox1.Width, pictureBox1.Height);
             pictureBox1.Image = bmp;
             g = Graphics.FromImage(bmp);
@@ -46,6 +54,7 @@ namespace lab6
             numericUpDown2.Maximum = 200;
             numericUpDown3.Maximum = 200;
             numericUpDown4.Maximum = 200;
+            Point.worldCenter = new PointF(pictureBox1.Width / 2, pictureBox1.Height / 2);
             pictureBox1.MouseDown += new MouseEventHandler(pictureBox1_MouseDown);
             clearScene();
 
@@ -60,6 +69,12 @@ namespace lab6
             }
         }
 
+        private void AddItemsToComboBox2()
+        {
+            comboBox2.Items.Add("X");
+            comboBox2.Items.Add("Y");
+            comboBox2.Items.Add("Z");
+        }
 
         public void clearScene()
         {
@@ -144,7 +159,7 @@ namespace lab6
             Point.projection = Projection.AXONOMETRIC;
             radioButton1.Checked = false;
             radioButton2.Checked = true;
-            //redraw();
+            redraw();
 
         }
 
@@ -153,12 +168,13 @@ namespace lab6
             Point.projection = Projection.PERSPECTIVE;
             radioButton2.Checked = false;
             radioButton1.Checked = true;
-            //redraw();
+            redraw();
 
         }
 
         private void button2_Click(object sender, EventArgs e)
         {
+            points.Clear();
             figures.Clear();
             clearScene();
         }
@@ -736,6 +752,42 @@ namespace lab6
             figure = BuildSurface(Func, x0, x1, y0, y1, stepsX, stepsY);
             drawShape(figure);
             figures.Add(figure);
+            redraw();
+        }
+
+
+
+        // ставим точки на pictureBox
+        private void pictureBox1_MouseClick(object sender, MouseEventArgs e)
+        {
+            points.Add(new PointF(e.Location.X - Point.worldCenter.X, e.Location.Y - Point.worldCenter.Y));
+            g.FillEllipse(Brushes.Black, e.Location.X - 5, e.Location.Y - 5, 5, 5);
+            pictureBox1.Invalidate();
+        }
+        // соединяем точки в многоугольник по кнопке draw
+        private void button16_Click(object sender, EventArgs e)
+        {
+            var pointsToDraw = points.Select(point => new PointF(point.X + Point.worldCenter.X, point.Y + Point.worldCenter.Y));
+            g.DrawPolygon(pen, pointsToDraw.ToArray());
+            pictureBox1.Invalidate();
+        }
+
+
+        // получаем матрицу вращения относительно выбранной оси
+
+
+        // получаем значения параметров для фигуры вращения (ось, кол-во разбиений, z)
+        public void getFieldsValue()
+        {
+            axis = comboBox2.Text;
+            divs = int.Parse(textBox21.Text);
+            z = int.Parse(textBox20.Text);
+        }
+
+        private void button17_Click(object sender, EventArgs e)
+        {
+            getFieldsValue();
+            figure = RotationShape.getRotationShape(divs, axis, points, z);
             redraw();
         }
 

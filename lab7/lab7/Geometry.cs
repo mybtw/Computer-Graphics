@@ -75,7 +75,7 @@ namespace lab6
             {
                 Matrix<double> oldCoords = Matrix<double>.Build.DenseOfArray(new double[,] { { X, Y, Z, 1 } });
                 Matrix<double> res = (oldCoords * centralProjectionMatrix).Multiply(1 / (k * Z + 1));
-                return new PointF(worldCenter.X + 150 + (float)res[0, 0], worldCenter.Y + (float)res[0, 1]);
+                return new PointF(worldCenter.X + (float)res[0, 0], worldCenter.Y + (float)res[0, 1]);
             }
             else
             {
@@ -86,7 +86,7 @@ namespace lab6
 
                 Matrix<double> oldCoords = Matrix<double>.Build.DenseOfArray(new double[,] { { X, Y, Z, 1 } });
                 Matrix<double> res = (oldCoords * isometricProjectionMatrix);
-                return new PointF(worldCenter.X + 150 + (float)res[0, 0], worldCenter.Y + (float)res[0, 1]);
+                return new PointF(worldCenter.X + (float)res[0, 0], worldCenter.Y + (float)res[0, 1]);
             }
         }
         public static Point operator -(Point a, Point b)
@@ -104,6 +104,41 @@ namespace lab6
         public static double degreesToRadians(double angle)
         {
             return Math.PI * angle / 180.0;
+        }
+
+        public static Matrix<double> getRotationMatrix(double startAngle, string axis)
+        {
+            double angle = Funcs.degreesToRadians(startAngle);
+            double sin = Math.Sin(angle);
+            double cos = Math.Cos(angle);
+            if (axis.Equals("X"))
+            {
+                Matrix<double> matrix = Matrix<double>.Build.DenseOfArray(new double[,] {
+                { 1, 0, 0 },
+                { 0, cos, -sin },
+                { 0, sin, cos}
+                });
+                return matrix;
+            }
+            else if (axis.Equals("Y"))
+            {
+                Matrix<double> matrix = Matrix<double>.Build.DenseOfArray(new double[,] {
+                { cos, 0, sin },
+                { 0, 1, 0 },
+                { -sin, 0, cos}
+                });
+                return matrix;
+
+            }
+            else
+            {
+                Matrix<double> matrix = Matrix<double>.Build.DenseOfArray(new double[,] {
+                { cos, -sin, 0 },
+                { sin, cos, 0 },
+                { 0, 0, 1}
+                });
+                return matrix;
+            }
         }
     }
     [Serializable]
@@ -320,5 +355,114 @@ namespace lab6
             return res;
         }
 
+    }
+
+
+    class RotationShape : Shape
+    {
+        List<Point> formingline;
+        Line axiz;
+        int Divisions;
+        List<Point> allpoints;
+        List<Line> edges;//ребра
+        public RotationShape()
+        {
+            allpoints = new List<Point>();
+            edges = new List<Line>();
+        }
+        public List<Line> Edges { get => edges; }
+        public Shape addEdge(Line edge)
+        {
+            edges.Add(edge);
+            return this;
+        }
+        public Shape addEdges(IEnumerable<Line> ed)
+        {
+            this.edges.AddRange(ed);
+            return this;
+        }
+        public RotationShape(IEnumerable<Point> points) : this()
+        {
+            this.allpoints.AddRange(points);
+        }
+        public RotationShape(Line ax, int Div, IEnumerable<Point> line) : this()
+        {
+            this.axiz = ax;
+            this.Divisions = Div;
+            this.formingline.AddRange(line);
+        }
+        public RotationShape addPoint(Point p)
+        {
+            allpoints.Add(p);
+            return this;
+        }
+        public RotationShape addPoints(IEnumerable<Point> points)
+        {
+            this.allpoints.AddRange(points);
+            return this;
+        }
+        public List<Point> Points { get => allpoints; }
+
+
+        public static RotationShape getRotationShape(int divs, string axis, List<PointF> points, int z)
+        {
+            var rotMatrix = Funcs.getRotationMatrix(360 / divs, axis);
+            List<Point> initialPoints = points.Select(point => new Point(point.X, point.Y, z)).ToList();
+            RotationShape figure = new RotationShape();
+            List<Point> nextPoints = initialPoints;
+            for (int i = 0; i < divs - 1; i++)
+            {
+                List<Point> futurePoints = new List<Point>();
+                foreach (Point point in nextPoints)
+                {
+                    Matrix<double> oldPoint = Matrix<double>.Build.DenseOfArray(new double[,] { { point.X }, { point.Y }, { point.Z } });
+                    Matrix<double> resPoint = rotMatrix * oldPoint;
+                    futurePoints.Add(new Point(resPoint[0, 0], resPoint[1, 0], resPoint[2, 0]));
+                }
+                List<Point> prevPair = new List<Point> { nextPoints[0], futurePoints[0] };
+
+                // формируем грани на основе 2 наборов точек фигур вращения
+                for (int j = 0; j < initialPoints.Count; j++)
+                {
+                    Face f1 = new Face();
+                    f1.addEdge(new Line(prevPair[0], prevPair[1]));
+                    f1.addEdge(new Line(nextPoints[j], futurePoints[j]));
+                    f1.addEdge(new Line(prevPair[0], nextPoints[j]));
+                    f1.addEdge(new Line(prevPair[1], futurePoints[j]));
+                    figure.addFace(f1);
+                    prevPair[0] = nextPoints[j];
+                    prevPair[1] = futurePoints[j];
+                }
+                Face f = new Face();
+                f.addEdge(new Line(nextPoints[0], futurePoints[0]));
+                f.addEdge(new Line(nextPoints[0], nextPoints[nextPoints.Count - 1]));
+                f.addEdge(new Line(nextPoints[nextPoints.Count - 1], futurePoints[futurePoints.Count - 1]));
+                f.addEdge(new Line(futurePoints[0], futurePoints[futurePoints.Count - 1]));
+                figure.addFace(f);
+                nextPoints = futurePoints;
+            }
+
+            List<Point> prevP = new List<Point> { initialPoints[0], nextPoints[0] };
+            for (int j = 1; j < initialPoints.Count; j++)
+            {
+                Face f = new Face();
+                f.addEdge(new Line(prevP[0], prevP[1]));
+                f.addEdge(new Line(initialPoints[j], nextPoints[j]));
+                f.addEdge(new Line(prevP[0], initialPoints[j]));
+                f.addEdge(new Line(prevP[1], nextPoints[j]));
+                figure.addFace(f);
+                prevP[0] = initialPoints[j];
+                prevP[1] = nextPoints[j];
+            }
+
+            Face ff = new Face();
+            ff.addEdge(new Line(initialPoints[0], nextPoints[0]));
+            ff.addEdge(new Line(initialPoints[0], initialPoints[initialPoints.Count - 1]));
+            ff.addEdge(new Line(initialPoints[initialPoints.Count - 1], nextPoints[nextPoints.Count - 1]));
+            ff.addEdge(new Line(nextPoints[0], nextPoints[nextPoints.Count - 1]));
+            figure.addFace(ff);
+
+            return figure;
+        }
     }
 }
