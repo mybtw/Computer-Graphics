@@ -103,6 +103,14 @@
             label23 = new Label();
             comboBox2 = new ComboBox();
             button16 = new Button();
+            textBox22 = new TextBox();
+            textBox23 = new TextBox();
+            textBox24 = new TextBox();
+            label24 = new Label();
+            label25 = new Label();
+            label26 = new Label();
+            label27 = new Label();
+            button18 = new Button();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)numericUpDown1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)numericUpDown2).BeginInit();
@@ -773,11 +781,89 @@
             button16.UseVisualStyleBackColor = true;
             button16.Click += button16_Click;
             // 
+            // textBox22
+            // 
+            textBox22.Location = new System.Drawing.Point(1028, 34);
+            textBox22.Name = "textBox22";
+            textBox22.Size = new Size(42, 27);
+            textBox22.TabIndex = 55;
+            // 
+            // textBox23
+            // 
+            textBox23.Location = new System.Drawing.Point(1028, 80);
+            textBox23.Name = "textBox23";
+            textBox23.Size = new Size(42, 27);
+            textBox23.TabIndex = 56;
+            textBox23.TextChanged += textBox23_TextChanged;
+            // 
+            // textBox24
+            // 
+            textBox24.Location = new System.Drawing.Point(1028, 125);
+            textBox24.Name = "textBox24";
+            textBox24.Size = new Size(42, 27);
+            textBox24.TabIndex = 57;
+            // 
+            // label24
+            // 
+            label24.AutoSize = true;
+            label24.Location = new System.Drawing.Point(975, 9);
+            label24.Name = "label24";
+            label24.Size = new Size(115, 20);
+            label24.TabIndex = 58;
+            label24.Text = "Вектор обзора:";
+            // 
+            // label25
+            // 
+            label25.AutoSize = true;
+            label25.Location = new System.Drawing.Point(1006, 37);
+            label25.Name = "label25";
+            label25.Size = new Size(16, 20);
+            label25.TabIndex = 59;
+            label25.Text = "x";
+            label25.Click += label25_Click;
+            // 
+            // label26
+            // 
+            label26.AutoSize = true;
+            label26.Location = new System.Drawing.Point(1006, 83);
+            label26.Name = "label26";
+            label26.Size = new Size(16, 20);
+            label26.TabIndex = 60;
+            label26.Text = "y";
+            label26.Click += label26_Click;
+            // 
+            // label27
+            // 
+            label27.AutoSize = true;
+            label27.Location = new System.Drawing.Point(1006, 125);
+            label27.Name = "label27";
+            label27.Size = new Size(16, 20);
+            label27.TabIndex = 61;
+            label27.Text = "z";
+            // 
+            // button18
+            // 
+            button18.Location = new System.Drawing.Point(1028, 168);
+            button18.Name = "button18";
+            button18.Size = new Size(94, 29);
+            button18.TabIndex = 62;
+            button18.Text = "Apply";
+            button18.UseVisualStyleBackColor = true;
+            button18.Click += button18_Click;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(966, 763);
+            ClientSize = new Size(1165, 763);
+            Controls.Add(button18);
+            Controls.Add(label27);
+            Controls.Add(label26);
+            Controls.Add(label25);
+            Controls.Add(label24);
+            Controls.Add(textBox24);
+            Controls.Add(textBox23);
+            Controls.Add(textBox22);
             Controls.Add(label21);
             Controls.Add(textBox20);
             Controls.Add(button17);
@@ -941,5 +1027,13 @@
         private Label label23;
         private ComboBox comboBox2;
         private Button button16;
+        private TextBox textBox22;
+        private TextBox textBox23;
+        private TextBox textBox24;
+        private Label label24;
+        private Label label25;
+        private Label label26;
+        private Label label27;
+        private Button button18;
     }
 }

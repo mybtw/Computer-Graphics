@@ -5,6 +5,7 @@ using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MathNet.Numerics;
 using MathNet.Numerics.LinearAlgebra;
 
 namespace lab6
@@ -155,7 +156,64 @@ namespace lab6
     }
     class Vector
     {
+        public Vector()
+        {
+        }
+
         double X { get; set;}
+        double Y { get; set; }
+        double Z { get; set; }
+
+        public Vector(double x, double y, double z)
+        {
+            X = x;
+            Y = y;
+            Z = z;
+        }
+        public Vector(Point p)
+        {
+            X = p.X;
+            Y = p.Y;
+            Z = p.Z;
+        }
+        public Vector(PointF p)
+        {
+            X = p.X;
+            Y = p.Y;
+            Z = 0;
+        }
+
+        public static Vector operator -(Vector v1, Vector v2)
+        {
+            return new Vector(v2.X - v1.X, v2.Y - v1.Y, v2.Z - v1.Z);
+        }
+
+        public static Vector operator +(Vector v1, Vector v2)
+        {
+            return new Vector(v1.X + v2.X, v1.Y + v2.Y, v1.Z + v2.Z);
+        }
+
+        public static Vector operator *(Vector a, Vector b)
+        {
+            return new Vector(a.Y * b.Z - a.Z * b.Y, a.Z * b.X - a.X * b.Z, a.X * b.Y - a.Y * b.X);
+        }
+
+        public static Vector operator *(double k, Vector b)
+        {
+            return new Vector(k * b.X, k * b.Y, k * b.Z);
+        }
+        public static double scalar(Vector a, Vector b)
+        {
+            return a.X * b.X + a.Y * b.Y + a.Z * b.Z;
+        }
+        public Vector normalize()
+        {
+            double normalization = Math.Sqrt(Math.Pow(X, 2) + Math.Pow(Y, 2) + Math.Pow(Z, 2));
+            X = X / normalization;
+            Y = Y / normalization;
+            Z = Z / normalization;
+            return this;
+        }
     }
 
     [Serializable]
@@ -165,12 +223,13 @@ namespace lab6
         // взял 3 точки
         // перемножил их в CCW, получил вектор нормали
         List<Line> edges;
-
+        public Vector normal { get; set; }
 
 
         public Face()
         {
             edges = new List<Line>();
+            normal = new Vector(0, 0, 0);
         }
 
         public Face(IEnumerable<Line> edges) : this()
@@ -202,6 +261,16 @@ namespace lab6
             }
             return new Point(x / edges.Count, y / edges.Count, z / edges.Count);
         }
+
+        public void setNormal()
+        {
+            Line first = edges[0];
+            Line last = edges[edges.Count - 1];
+            Vector start = new Vector(first.start);
+            Vector a = start - new Vector(first.end);
+            Vector b = start - new Vector(last.start);
+            this.normal = a * b;
+        }
     }
 
 
@@ -222,6 +291,14 @@ namespace lab6
             return this;
         }
 
+        public void calcNormals()
+        {
+            foreach (Face f in faces)
+            {
+                f.setNormal();
+            }
+        }
+
         public List<Face> Faces { get => faces; }
 
     }
@@ -237,9 +314,9 @@ namespace lab6
             Point f = new Point(150, 150, 0);
             Point h = new Point(0, 150, 150);
             res.addFace(new Face().addEdge(new Line(a, f)).addEdge(new Line(f, c)).addEdge(new Line(c, a)));
-            res.addFace(new Face().addEdge(new Line(f, c)).addEdge(new Line(c, h)).addEdge(new Line(h, f)));
+            res.addFace(new Face().addEdge(new Line(f, h)).addEdge(new Line(h, c)).addEdge(new Line(c, f)));
             res.addFace(new Face().addEdge(new Line(c, h)).addEdge(new Line(h, a)).addEdge(new Line(a, c)));
-            res.addFace(new Face().addEdge(new Line(f, h)).addEdge(new Line(h, a)).addEdge(new Line(a, f)));
+            res.addFace(new Face().addEdge(new Line(f, a)).addEdge(new Line(a, h)).addEdge(new Line(h, f)));
             return res;
         }
     }
@@ -257,7 +334,7 @@ namespace lab6
             Point e = cube.Faces[4].getCenter();
             Point f = cube.Faces[5].getCenter();
 
-            res.addFace(new Face().addEdge(new Line(a, f)).addEdge(new Line(f, b)).addEdge(new Line(b, a)));
+            res.addFace(new Face().addEdge(new Line(a, b)).addEdge(new Line(b, f)).addEdge(new Line(f, a)));
             res.addFace(new Face().addEdge(new Line(b, c)).addEdge(new Line(c, f)).addEdge(new Line(f, b)));
             res.addFace(new Face().addEdge(new Line(c, d)).addEdge(new Line(d, f)).addEdge(new Line(f, c)));
             res.addFace(new Face().addEdge(new Line(d, a)).addEdge(new Line(a, f)).addEdge(new Line(f, d)));
@@ -286,10 +363,10 @@ namespace lab6
             Point g = new Point(150, 150, 150);
             Point h = new Point(0, 150, 150);
             res.addFace(new Face().addEdge(new Line(a, b)).addEdge(new Line(b, c)).addEdge(new Line(c, d)).addEdge(new Line(d, a)));
-            res.addFace(new Face().addEdge(new Line(b, c)).addEdge(new Line(c, g)).addEdge(new Line(g, f)).addEdge(new Line(f, b)));
-            res.addFace(new Face().addEdge(new Line(f, g)).addEdge(new Line(g, h)).addEdge(new Line(h, e)).addEdge(new Line(e, f)));
+            res.addFace(new Face().addEdge(new Line(b, f)).addEdge(new Line(f, g)).addEdge(new Line(g, c)).addEdge(new Line(c, b)));
+            res.addFace(new Face().addEdge(new Line(f, e)).addEdge(new Line(e, h)).addEdge(new Line(h, g)).addEdge(new Line(g, f)));
             res.addFace(new Face().addEdge(new Line(h, e)).addEdge(new Line(e, a)).addEdge(new Line(a, d)).addEdge(new Line(d, h)));
-            res.addFace(new Face().addEdge(new Line(a, b)).addEdge(new Line(b, f)).addEdge(new Line(f, e)).addEdge(new Line(e, a)));
+            res.addFace(new Face().addEdge(new Line(a, e)).addEdge(new Line(e, f)).addEdge(new Line(f, b)).addEdge(new Line(b, a)));
             res.addFace(new Face().addEdge(new Line(d, c)).addEdge(new Line(c, g)).addEdge(new Line(g, h)).addEdge(new Line(h, d)));
             return res;
         }

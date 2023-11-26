@@ -17,7 +17,7 @@ namespace lab6
         String axis;
         int divs;
         int z;
-
+        Vector viewVector = new Vector(0, 0, -1);
         private List<PointF> points = new List<PointF>();
         Pen pen = new Pen(Color.Black, 2);
 
@@ -133,10 +133,14 @@ namespace lab6
 
         void drawShape(Shape shape)
         {
+            shape.calcNormals();
             foreach (var face in shape.Faces)
             {
-                Pen pen = new Pen(Color.Black, 3);
-                drawFace(face, pen);
+                if (Vector.scalar(face.normal, viewVector) > 0)
+                {
+                    Pen pen = new Pen(Color.Black, 3);
+                    drawFace(face, pen);
+                }
             }
         }
 
@@ -789,6 +793,29 @@ namespace lab6
             getFieldsValue();
             figure = RotationShape.getRotationShape(divs, axis, points, z);
             redraw();
+        }
+
+        private void textBox23_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label26_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label25_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button18_Click(object sender, EventArgs e)
+        {
+            double x = double.Parse(textBox22.Text);
+            double y = double.Parse(textBox23.Text);
+            double z = double.Parse(textBox24.Text);
+            this.viewVector = (new Vector(x, y, z)).normalize();
         }
 
 
