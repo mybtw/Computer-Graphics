@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using NCalc;
 using Expression = NCalc.Expression;
 using MathNet.Numerics.LinearAlgebra;
+using System.Drawing;
 
 namespace lab6
 {
@@ -23,6 +24,11 @@ namespace lab6
         Pen pen = new Pen(Color.Black, 2);
         Line linse;
         private Camera camera = new Camera();
+        private double[,] depthBuffer;
+        private bool useZBuffer = false;
+        private bool insidePolygon = false;
+        private CheckBox checkBox2;
+
         private class Section
         {
             public Point leftP, rightP;
@@ -68,8 +74,9 @@ namespace lab6
             camera.Offset = Point.worldCenter;
             //camera.Focus = new Point(0, 0, 1000);
             pictureBox1.MouseDown += new MouseEventHandler(pictureBox1_MouseDown);
+            depthBuffer = new double[ClientSize.Width, ClientSize.Height];
             clearScene();
-            
+
 
         }
 
@@ -92,8 +99,6 @@ namespace lab6
         public void clearScene()
         {
             g.Clear(Color.White);
-            figures.Clear();
-            linse = null;
             pictureBox1.Invalidate();
         }
         private void ApplyTransformationToFigure(Shape shape, double[,] transformationMatrix)
@@ -111,20 +116,28 @@ namespace lab6
         {
             clearScene();
             double[,] viewMatrix = camera.GetViewMatrix();
-            if (figure != null) {
-                ApplyTransformationToFigure(figure, viewMatrix);
-                draw(figure); 
+            foreach (var figure in figures)
+            {
+                if (figure != null)
+                {
+                    ApplyTransformationToFigure(figure, viewMatrix);
+                    if (useZBuffer)
+                    {
+                        ClearDepthBuffer();
+                        drawWithZBuffer(figure);
+                    }
+                    else
+                    {
+                        draw(figure);
+                    }
+                }
             }
             if (linse != null && linse.start != null && linse.end != null)
             {
                 Pen pen = new Pen(Color.Black, 3);
                 drawLine(linse, pen);
             }
-            /*foreach (var fig in figures)
-            {
-                draw(fig);
-            }*/
-
+            pictureBox1.Invalidate();
         }
 
         private void draw(Shape figure)
@@ -135,7 +148,7 @@ namespace lab6
         // Рисует выбранную фигуру
         private void button1_Click(object sender, EventArgs e)
         {
-            clearScene();
+            // clearScene();
             draw();
             if (linse != null && linse.start != null && linse.end != null)
             {
@@ -156,6 +169,7 @@ namespace lab6
                 case 4: figure = Dodecahedron.getDodecahedron(); drawShape(figure); figures.Add(figure); break;
                 default: figure = Hexahedron.getHexahedron(); drawShape(figure); figures.Add(figure); break;
             }
+            pictureBox1.Invalidate();
         }
 
         void drawShape(Shape shape)
@@ -184,6 +198,89 @@ namespace lab6
             g.DrawLine(pen, line.start.project(), line.end.project());
         }
 
+        private void drawWithZBuffer(Shape shape)
+        {
+            shape.calcNormals();
+            foreach (var face in shape.Faces)
+            {
+                if (checkBox2.Checked) 
+                {
+                if (Vector.scalar(face.normal, viewVector) > 0)
+                {
+                    Pen pen = new Pen(Color.Black, 3);
+                    drawFaceWithZBuffer(face, pen);
+                }
+                }
+                else
+                {
+                    Pen pen = new Pen(Color.Black, 3);
+                    drawFaceWithZBuffer(face, pen);
+                }
+            }
+        }
+
+        private void drawFaceWithZBuffer(Face face, Pen pen)
+        {
+            foreach (var line in face.Edges)
+            {
+                drawLineWithZBuffer(line, pen);
+            }
+        }
+
+        private void drawLineWithZBuffer(Line line, Pen pen)
+        {
+            PointF startPoint = line.start.project();
+            PointF endPoint = line.end.project();
+
+            int x1 = (int)startPoint.X;
+            int y1 = (int)startPoint.Y;
+            int x2 = (int)endPoint.X;
+            int y2 = (int)endPoint.Y;
+
+            for (int t = 0; t <= 100; t++)
+            {
+                float x = x1 + (float)t / 100.0f * (x2 - x1);
+                float y = y1 + (float)t / 100.0f * (y2 - y1);
+
+
+                double z = line.start.Z + (t / 100.0) * (line.end.Z - line.start.Z);
+
+                if (CheckDepth((int)x, (int)y, z))
+                {
+                    g.DrawLine(pen, x, y, x + 1, y + 1); // рисовать только если прошла проверка по z
+                }
+                else
+                {
+                    insidePolygon = true;
+                }
+            }
+        }
+
+        private void ClearDepthBuffer()
+        {
+            // Очистка буфера глубины
+            for (int x = 0; x < ClientSize.Width; x++)
+            {
+                for (int y = 0; y < ClientSize.Height; y++)
+                {
+                    depthBuffer[x, y] = double.MaxValue;
+                }
+            }
+        }
+
+        private bool CheckDepth(int x, int y, double z)
+        {
+            if (x >= 0 && x < ClientSize.Width && y >= 0 && y < ClientSize.Height)
+            {
+                if (z > 0 && z < depthBuffer[x, y])
+
+                {
+                    depthBuffer[x, y] = z;
+                    return true;
+                }
+            }
+            return false;
+        }
 
         private void radioButton2_MouseClick(object sender, MouseEventArgs e)
         {
@@ -253,6 +350,7 @@ namespace lab6
                     newPoint[i] += pointArray[j] * matrix[j, i];
             return new Point(newPoint[0], newPoint[1], newPoint[2]);
         }
+
         // Метод для поворота 3D фигуры
         private void Rotate(double angleX, double angleY, double angleZ)
         {
@@ -573,31 +671,10 @@ namespace lab6
         }
 
 
-        private Point ConvertScreenTo3D(int screenX, int screenY)
-        {
-            return new Point(screenX, screenY, 0);
-        }
 
         private void pictureBox1_MouseDown(object sender, MouseEventArgs e)
         {
-            //int mouseX = e.X;
-            //int mouseY = e.Y;
-
-            //Point clickedPoint = ConvertScreenTo3D(mouseX, mouseY);
-
-            //if (firstPoint == null)
-            //{
-            //    firstPoint = clickedPoint;
-            //}
-            //else
-            //{
-            //    secondPoint = clickedPoint;
-            //    linse = new Line(firstPoint, secondPoint);
-            //    Pen pen = new Pen(Color.Black, 3);
-            //    drawLine(linse, pen);
-            //    pictureBox1.Invalidate();
-            //    firstPoint = null;
-            //}
+           
         }
 
         private void RotateShapeAroundLine(Point point1, Point point2, double angleDegrees)
@@ -844,5 +921,41 @@ namespace lab6
             camera.MoveCamera(offsetX, offsetY, offsetZ);
             redraw();
         }
+
+
+        private void checkBox1_CheckedChanged(object sender, EventArgs e)
+        {
+            if (checkBox1.Checked)
+            {
+                checkBox2 = new CheckBox();
+                checkBox2.Text = "Грани?";
+                checkBox2.Location = new System.Drawing.Point(checkBox1.Location.X, checkBox1.Location.Y + checkBox1.Height + 10);
+                this.Controls.Add(checkBox2);
+                checkBox2.Checked = true;
+            }
+            else
+            {
+                if (checkBox2 != null)
+                {
+                    this.Controls.Remove(checkBox2);
+                    checkBox2.Dispose();
+                    checkBox2 = null;
+                }
+            }
+            if (checkBox1.Checked)
+            {
+                useZBuffer = true;
+                clearScene();
+                redraw();
+            }
+            else
+            {
+                useZBuffer = false;
+                clearScene();
+                redraw();
+            }
+            
+        }
+
     }
 }
