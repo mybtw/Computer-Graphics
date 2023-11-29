@@ -264,15 +264,14 @@ namespace lab6
 
                     if (endX >= startX)
                     {
-                        int x1 = (int)startX;
-                        int x2 = (int)endX;
+                        int x1 = (int)Math.Abs(startX);
+                        int x2 = (int)Math.Abs(endX);
                         for (int x = (int)startX; x <= endX; x++)
                         {                        
                             if (avgz < depthBuffer[x, y])
                             {
                                 depthBuffer[x, y] = avgz;
-                            }
-                            
+                            }                            
                         }
                     }
                 }
@@ -301,7 +300,7 @@ namespace lab6
 
                 double z = avgz;
 
-                if (CheckDepth((int)x, (int)y, z))
+                if (CheckDepth((int)Math.Abs(x), (int)y, Math.Abs(z)))
                 {
                     g.DrawLine(pen, x, y, x + 1, y + 1);
                 }
@@ -918,6 +917,7 @@ namespace lab6
             g.FillEllipse(Brushes.Black, e.Location.X - 5, e.Location.Y - 5, 5, 5);
             pictureBox1.Invalidate();
         }
+
         // соединяем точки в многоугольник по кнопке draw
         private void button16_Click(object sender, EventArgs e)
         {

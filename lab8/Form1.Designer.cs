@@ -1,4 +1,6 @@
-﻿namespace lab6
+﻿using System.Windows.Forms;
+
+namespace lab6
 {
     partial class Form1
     {
@@ -144,6 +146,7 @@
             pictureBox1.Size = new Size(639, 516);
             pictureBox1.TabIndex = 0;
             pictureBox1.TabStop = false;
+            pictureBox1.MouseClick += pictureBox1_MouseClick;
             // 
             // comboBox1
             // 
