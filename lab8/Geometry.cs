@@ -164,13 +164,6 @@ namespace lab6
                     {0, 0, 0}
         });
 
-        //public Point(int x, int y, int z)
-        //{
-        //    this.x = x;
-        //    this.y = y;
-        //    this.z = z;
-        //}
-
         public Point(double x, double y, double z)
         {
             this.x = x;
@@ -414,6 +407,29 @@ namespace lab6
                 f.setNormal();
             }
         }
+        public double GetAverageZ()
+        {
+            if (faces == null || faces.Count == 0)
+            {
+                return 0.0; // или другое значение по умолчанию
+            }
+
+            double sumZ = 0.0;
+            int vertexCount = 0;
+
+            foreach (var face in faces)
+            {
+                foreach (var line in face.Edges)
+                {
+                    sumZ += line.start.Z;
+                    sumZ += line.end.Z;
+                    vertexCount += 2; // Учитываем две вершины для каждой линии
+                }
+            }
+
+            return sumZ / vertexCount;
+        }
+
 
         public List<Face> Faces { get => faces; }
 
