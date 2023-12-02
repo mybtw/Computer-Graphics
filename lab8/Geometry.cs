@@ -10,6 +10,122 @@ using MathNet.Numerics.LinearAlgebra;
 
 namespace lab6
 {
+    class Camera
+    {
+        public Point Position { get; set; } = new Point(0, 0, 0);
+        //public Point Focus { get; set; } = new Point(0, 0, 0);
+        public PointF Offset { get; set; } = new PointF(0, 0);
+        public double AngleX { get; set; } = 0;
+        public double AngleY { get; set; } = 0;
+        public double AngleZ { get; set; } = 0;
+
+
+        public void MoveCamera(double dx, double dy, double dz)
+        {
+            Position = new Point(dx, dy, dz);
+            //Focus = new Point(dx, dy, 1000);
+        }
+
+        public void RotateCamera(double ax, double ay, double az)
+        {
+            AngleX = ax;
+            AngleY = ay;
+            AngleZ = az;
+
+            if (AngleX > 360) AngleX -= 360;
+            else if (AngleX < 0) AngleX += 360;
+
+            if (AngleY > 360) AngleY -= 360;
+            else if (AngleY < 0) AngleY += 360;
+
+            if (AngleZ > 360) AngleZ -= 360;
+            else if (AngleZ < 0) AngleZ += 360;
+
+            // При поворотах обновим координаты Focus
+            double radianX = AngleX * Math.PI / 180.0;
+            double radianY = AngleY * Math.PI / 180.0;
+            double radianZ = AngleZ * Math.PI / 180.0;
+
+            // Здесь можно использовать уже обновленные углы для вычисления новых координат Focus
+            //Focus.X = Position.X + (int)(1000 * Math.Sin(radianX) * Math.Cos(radianY));
+            //Focus.Y = Position.Y + (int)(1000 * Math.Sin(radianX) * Math.Sin(radianY));
+            //Focus.Z = Position.Z + (int)(1000 * Math.Cos(radianX));
+        }
+        public double[,] GetViewMatrix()
+        {
+            double[,] translationMatrix = new double[4, 4]
+            {
+        {1, 0, 0, 0},
+        {0, 1, 0, 0},
+        {0, 0, 1, 0},
+        {-Position.X, -Position.Y, -Position.Z, 1}
+            };
+
+            double cosX = Math.Cos(AngleX * Math.PI / 180);
+            double sinX = Math.Sin(AngleX * Math.PI / 180);
+
+            double cosY = Math.Cos(AngleY * Math.PI / 180);
+            double sinY = Math.Sin(AngleY * Math.PI / 180);
+
+            double cosZ = Math.Cos(AngleZ * Math.PI / 180);
+            double sinZ = Math.Sin(AngleZ * Math.PI / 180);
+
+            double[,] rotationMatrixX = new double[4, 4]
+            {
+        {1, 0, 0, 0},
+        {0, cosX, -sinX, 0},
+        {0, sinX, cosX, 0},
+        {0, 0, 0, 1}
+            };
+
+            double[,] rotationMatrixY = new double[4, 4]
+            {
+        {cosY, 0, sinY, 0},
+        {0, 1, 0, 0},
+        {-sinY, 0, cosY, 0},
+        {0, 0, 0, 1}
+            };
+
+            double[,] rotationMatrixZ = new double[4, 4]
+            {
+        {cosZ, -sinZ, 0, 0},
+        {sinZ, cosZ, 0, 0},
+        {0, 0, 1, 0},
+        {0, 0, 0, 1}
+            };
+
+            double[,] viewMatrix = MatrixMultiply(rotationMatrixX, rotationMatrixY);
+            viewMatrix = MatrixMultiply(viewMatrix, rotationMatrixZ);
+            viewMatrix = MatrixMultiply(viewMatrix, translationMatrix);
+
+            return viewMatrix;
+        }
+
+        private double[,] MatrixMultiply(double[,] matrix1, double[,] matrix2)
+        {
+            int rows1 = matrix1.GetLength(0);
+            int cols1 = matrix1.GetLength(1);
+            int rows2 = matrix2.GetLength(0);
+            int cols2 = matrix2.GetLength(1);
+
+            double[,] result = new double[rows1, cols2];
+
+            for (int i = 0; i < rows1; i++)
+            {
+                for (int j = 0; j < cols2; j++)
+                {
+                    result[i, j] = 0;
+                    for (int k = 0; k < cols1; k++)
+                    {
+                        result[i, j] += matrix1[i, k] * matrix2[k, j];
+                    }
+                }
+            }
+
+            return result;
+        }
+
+    }
     public enum Projection { PERSPECTIVE, AXONOMETRIC }
     [Serializable]
     class Point
@@ -47,13 +163,6 @@ namespace lab6
                     {0, 1, 0},
                     {0, 0, 0}
         });
-
-        //public Point(int x, int y, int z)
-        //{
-        //    this.x = x;
-        //    this.y = y;
-        //    this.z = z;
-        //}
 
         public Point(double x, double y, double z)
         {
@@ -298,6 +407,29 @@ namespace lab6
                 f.setNormal();
             }
         }
+        public double GetAverageZ()
+        {
+            if (faces == null || faces.Count == 0)
+            {
+                return 0.0; // или другое значение по умолчанию
+            }
+
+            double sumZ = 0.0;
+            int vertexCount = 0;
+
+            foreach (var face in faces)
+            {
+                foreach (var line in face.Edges)
+                {
+                    sumZ += line.start.Z;
+                    sumZ += line.end.Z;
+                    vertexCount += 2; // Учитываем две вершины для каждой линии
+                }
+            }
+
+            return sumZ / vertexCount;
+        }
+
 
         public List<Face> Faces { get => faces; }
 

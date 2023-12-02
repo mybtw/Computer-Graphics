@@ -1,4 +1,6 @@
-﻿namespace lab6
+﻿using System.Windows.Forms;
+
+namespace lab6
 {
     partial class Form1
     {
@@ -111,6 +113,23 @@
             label26 = new Label();
             label27 = new Label();
             button18 = new Button();
+            textBox25 = new TextBox();
+            textBox26 = new TextBox();
+            textBox27 = new TextBox();
+            textBox28 = new TextBox();
+            textBox29 = new TextBox();
+            button19 = new Button();
+            textBox30 = new TextBox();
+            label28 = new Label();
+            label29 = new Label();
+            label30 = new Label();
+            label31 = new Label();
+            label32 = new Label();
+            label33 = new Label();
+            label34 = new Label();
+            label35 = new Label();
+            label36 = new Label();
+            checkBox1 = new CheckBox();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)numericUpDown1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)numericUpDown2).BeginInit();
@@ -547,7 +566,7 @@
             // 
             // loadButton
             // 
-            loadButton.Location = new System.Drawing.Point(12, 607);
+            loadButton.Location = new System.Drawing.Point(11, 607);
             loadButton.Name = "loadButton";
             loadButton.Size = new Size(121, 63);
             loadButton.TabIndex = 19;
@@ -645,7 +664,7 @@
             // 
             // textBox17
             // 
-            textBox17.Location = new System.Drawing.Point(352, 694);
+            textBox17.Location = new System.Drawing.Point(352, 693);
             textBox17.Name = "textBox17";
             textBox17.Size = new Size(60, 27);
             textBox17.TabIndex = 39;
@@ -654,7 +673,7 @@
             // label16
             // 
             label16.AutoSize = true;
-            label16.Location = new System.Drawing.Point(247, 718);
+            label16.Location = new System.Drawing.Point(247, 717);
             label16.Name = "label16";
             label16.Size = new Size(68, 20);
             label16.TabIndex = 40;
@@ -680,7 +699,7 @@
             // label18
             // 
             label18.AutoSize = true;
-            label18.Location = new System.Drawing.Point(321, 734);
+            label18.Location = new System.Drawing.Point(321, 733);
             label18.Name = "label18";
             label18.Size = new Size(17, 20);
             label18.TabIndex = 43;
@@ -706,7 +725,7 @@
             // label20
             // 
             label20.AutoSize = true;
-            label20.Location = new System.Drawing.Point(641, 618);
+            label20.Location = new System.Drawing.Point(641, 619);
             label20.Name = "label20";
             label20.Size = new Size(168, 20);
             label20.TabIndex = 46;
@@ -730,7 +749,7 @@
             // 
             // button17
             // 
-            button17.Location = new System.Drawing.Point(634, 722);
+            button17.Location = new System.Drawing.Point(634, 723);
             button17.Name = "button17";
             button17.Size = new Size(94, 29);
             button17.TabIndex = 52;
@@ -741,7 +760,7 @@
             // label22
             // 
             label22.AutoSize = true;
-            label22.Location = new System.Drawing.Point(741, 726);
+            label22.Location = new System.Drawing.Point(741, 725);
             label22.Name = "label22";
             label22.Size = new Size(88, 20);
             label22.TabIndex = 51;
@@ -766,14 +785,14 @@
             // comboBox2
             // 
             comboBox2.FormattingEnabled = true;
-            comboBox2.Location = new System.Drawing.Point(838, 678);
+            comboBox2.Location = new System.Drawing.Point(838, 677);
             comboBox2.Name = "comboBox2";
             comboBox2.Size = new Size(114, 28);
             comboBox2.TabIndex = 48;
             // 
             // button16
             // 
-            button16.Location = new System.Drawing.Point(634, 678);
+            button16.Location = new System.Drawing.Point(634, 677);
             button16.Name = "button16";
             button16.Size = new Size(94, 29);
             button16.TabIndex = 47;
@@ -783,22 +802,21 @@
             // 
             // textBox22
             // 
-            textBox22.Location = new System.Drawing.Point(1028, 34);
+            textBox22.Location = new System.Drawing.Point(1029, 35);
             textBox22.Name = "textBox22";
             textBox22.Size = new Size(42, 27);
             textBox22.TabIndex = 55;
             // 
             // textBox23
             // 
-            textBox23.Location = new System.Drawing.Point(1028, 80);
+            textBox23.Location = new System.Drawing.Point(1029, 80);
             textBox23.Name = "textBox23";
             textBox23.Size = new Size(42, 27);
             textBox23.TabIndex = 56;
-            textBox23.TextChanged += textBox23_TextChanged;
             // 
             // textBox24
             // 
-            textBox24.Location = new System.Drawing.Point(1028, 125);
+            textBox24.Location = new System.Drawing.Point(1029, 125);
             textBox24.Name = "textBox24";
             textBox24.Size = new Size(42, 27);
             textBox24.TabIndex = 57;
@@ -820,7 +838,6 @@
             label25.Size = new Size(16, 20);
             label25.TabIndex = 59;
             label25.Text = "x";
-            label25.Click += label25_Click;
             // 
             // label26
             // 
@@ -830,7 +847,6 @@
             label26.Size = new Size(16, 20);
             label26.TabIndex = 60;
             label26.Text = "y";
-            label26.Click += label26_Click;
             // 
             // label27
             // 
@@ -843,7 +859,7 @@
             // 
             // button18
             // 
-            button18.Location = new System.Drawing.Point(1028, 168);
+            button18.Location = new System.Drawing.Point(1029, 168);
             button18.Name = "button18";
             button18.Size = new Size(94, 29);
             button18.TabIndex = 62;
@@ -851,11 +867,158 @@
             button18.UseVisualStyleBackColor = true;
             button18.Click += button18_Click;
             // 
+            // textBox25
+            // 
+            textBox25.Location = new System.Drawing.Point(978, 288);
+            textBox25.Name = "textBox25";
+            textBox25.Size = new Size(42, 27);
+            textBox25.TabIndex = 55;
+            // 
+            // textBox26
+            // 
+            textBox26.Location = new System.Drawing.Point(1029, 288);
+            textBox26.Name = "textBox26";
+            textBox26.Size = new Size(42, 27);
+            textBox26.TabIndex = 55;
+            // 
+            // textBox27
+            // 
+            textBox27.Location = new System.Drawing.Point(1078, 288);
+            textBox27.Name = "textBox27";
+            textBox27.Size = new Size(42, 27);
+            textBox27.TabIndex = 55;
+            // 
+            // textBox28
+            // 
+            textBox28.Location = new System.Drawing.Point(978, 361);
+            textBox28.Name = "textBox28";
+            textBox28.Size = new Size(42, 27);
+            textBox28.TabIndex = 55;
+            // 
+            // textBox29
+            // 
+            textBox29.Location = new System.Drawing.Point(1031, 361);
+            textBox29.Name = "textBox29";
+            textBox29.Size = new Size(42, 27);
+            textBox29.TabIndex = 55;
+            // 
+            // button19
+            // 
+            button19.Location = new System.Drawing.Point(1006, 397);
+            button19.Name = "button19";
+            button19.Size = new Size(114, 52);
+            button19.TabIndex = 62;
+            button19.Text = "Применить преобразовния";
+            button19.UseVisualStyleBackColor = true;
+            button19.Click += button19_Click;
+            // 
+            // textBox30
+            // 
+            textBox30.Location = new System.Drawing.Point(1080, 361);
+            textBox30.Name = "textBox30";
+            textBox30.Size = new Size(42, 27);
+            textBox30.TabIndex = 55;
+            // 
+            // label28
+            // 
+            label28.AutoSize = true;
+            label28.Location = new System.Drawing.Point(992, 265);
+            label28.Name = "label28";
+            label28.Size = new Size(18, 20);
+            label28.TabIndex = 9;
+            label28.Text = "X";
+            // 
+            // label29
+            // 
+            label29.AutoSize = true;
+            label29.Location = new System.Drawing.Point(1041, 265);
+            label29.Name = "label29";
+            label29.Size = new Size(17, 20);
+            label29.TabIndex = 9;
+            label29.Text = "Y";
+            // 
+            // label30
+            // 
+            label30.AutoSize = true;
+            label30.Location = new System.Drawing.Point(1091, 265);
+            label30.Name = "label30";
+            label30.Size = new Size(18, 20);
+            label30.TabIndex = 9;
+            label30.Text = "Z";
+            // 
+            // label31
+            // 
+            label31.AutoSize = true;
+            label31.Location = new System.Drawing.Point(992, 339);
+            label31.Name = "label31";
+            label31.Size = new Size(18, 20);
+            label31.TabIndex = 9;
+            label31.Text = "X";
+            // 
+            // label32
+            // 
+            label32.AutoSize = true;
+            label32.Location = new System.Drawing.Point(1041, 343);
+            label32.Name = "label32";
+            label32.Size = new Size(17, 20);
+            label32.TabIndex = 9;
+            label32.Text = "Y";
+            // 
+            // label33
+            // 
+            label33.AutoSize = true;
+            label33.Location = new System.Drawing.Point(1091, 339);
+            label33.Name = "label33";
+            label33.Size = new Size(18, 20);
+            label33.TabIndex = 9;
+            label33.Text = "Z";
+            // 
+            // label34
+            // 
+            label34.AutoSize = true;
+            label34.Font = new Font("Segoe UI", 11.25F, FontStyle.Regular, GraphicsUnit.Point);
+            label34.Location = new System.Drawing.Point(1019, 213);
+            label34.Name = "label34";
+            label34.Size = new Size(77, 25);
+            label34.TabIndex = 2;
+            label34.Text = "Камера";
+            // 
+            // label35
+            // 
+            label35.AutoSize = true;
+            label35.Location = new System.Drawing.Point(1014, 240);
+            label35.Name = "label35";
+            label35.Size = new Size(86, 20);
+            label35.TabIndex = 2;
+            label35.Text = "Смещение:";
+            // 
+            // label36
+            // 
+            label36.AutoSize = true;
+            label36.Location = new System.Drawing.Point(1019, 323);
+            label36.Name = "label36";
+            label36.Size = new Size(73, 20);
+            label36.TabIndex = 2;
+            label36.Text = "Поворот:";
+            // 
+            // checkBox1
+            // 
+            checkBox1.AutoSize = true;
+            checkBox1.Location = new System.Drawing.Point(1011, 484);
+            checkBox1.Name = "checkBox1";
+            checkBox1.Size = new Size(89, 24);
+            checkBox1.TabIndex = 64;
+            checkBox1.Text = "Z-буфер";
+            checkBox1.UseVisualStyleBackColor = true;
+            checkBox1.CheckedChanged += checkBox1_CheckedChanged;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1165, 763);
+            Controls.Add(checkBox1);
+            Controls.Add(button19);
             Controls.Add(button18);
             Controls.Add(label27);
             Controls.Add(label26);
@@ -863,6 +1026,12 @@
             Controls.Add(label24);
             Controls.Add(textBox24);
             Controls.Add(textBox23);
+            Controls.Add(textBox30);
+            Controls.Add(textBox29);
+            Controls.Add(textBox27);
+            Controls.Add(textBox28);
+            Controls.Add(textBox26);
+            Controls.Add(textBox25);
             Controls.Add(textBox22);
             Controls.Add(label21);
             Controls.Add(textBox20);
@@ -914,10 +1083,16 @@
             Controls.Add(numericUpDown2);
             Controls.Add(numericUpDown1);
             Controls.Add(label8);
+            Controls.Add(label33);
+            Controls.Add(label30);
             Controls.Add(label5);
             Controls.Add(label7);
+            Controls.Add(label32);
+            Controls.Add(label29);
             Controls.Add(label4);
             Controls.Add(label6);
+            Controls.Add(label31);
+            Controls.Add(label28);
             Controls.Add(label3);
             Controls.Add(textBox3);
             Controls.Add(textBox6);
@@ -934,6 +1109,9 @@
             Controls.Add(button4);
             Controls.Add(button3);
             Controls.Add(button1);
+            Controls.Add(label36);
+            Controls.Add(label35);
+            Controls.Add(label34);
             Controls.Add(label1);
             Controls.Add(comboBox1);
             Controls.Add(pictureBox1);
@@ -1035,5 +1213,22 @@
         private Label label26;
         private Label label27;
         private Button button18;
+        private TextBox textBox25;
+        private TextBox textBox26;
+        private TextBox textBox27;
+        private TextBox textBox28;
+        private TextBox textBox29;
+        private Button button19;
+        private TextBox textBox30;
+        private Label label28;
+        private Label label29;
+        private Label label30;
+        private Label label31;
+        private Label label32;
+        private Label label33;
+        private Label label34;
+        private Label label35;
+        private Label label36;
+        private CheckBox checkBox1;
     }
 }

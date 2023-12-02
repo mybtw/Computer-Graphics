@@ -5,11 +5,14 @@ using System.Linq.Expressions;
 using NCalc;
 using Expression = NCalc.Expression;
 using MathNet.Numerics.LinearAlgebra;
+using System.Drawing;
+using System.Net;
 
 namespace lab6
 {
     public partial class Form1 : Form
     {
+
         Graphics g;
         Bitmap bmp;
         List<Shape> figures;
@@ -20,8 +23,13 @@ namespace lab6
         Vector viewVector = new Vector(0, 0, -1);
         private List<PointF> points = new List<PointF>();
         Pen pen = new Pen(Color.Black, 2);
-
         Line linse;
+        private Camera camera = new Camera();
+        private double[,] depthBuffer;
+        private bool useZBuffer = false;
+        private bool insidePolygon = false;
+        private CheckBox checkBox2;
+
         private class Section
         {
             public Point leftP, rightP;
@@ -46,6 +54,15 @@ namespace lab6
             textBox4.Text = "0";
             textBox5.Text = "0";
             textBox6.Text = "0";
+            textBox22.Text = "0";
+            textBox23.Text = "0";
+            textBox24.Text = "-1";
+            textBox25.Text = "0";
+            textBox26.Text = "0";
+            textBox27.Text = "0";
+            textBox28.Text = "0";
+            textBox29.Text = "0";
+            textBox30.Text = "0";
             numericUpDown1.Value = 100;
             numericUpDown2.Value = 100;
             numericUpDown3.Value = 100;
@@ -55,8 +72,19 @@ namespace lab6
             numericUpDown3.Maximum = 200;
             numericUpDown4.Maximum = 200;
             Point.worldCenter = new PointF(pictureBox1.Width / 2, pictureBox1.Height / 2);
+            camera.Offset = Point.worldCenter;
+            //camera.Focus = new Point(0, 0, 1000);
             pictureBox1.MouseDown += new MouseEventHandler(pictureBox1_MouseDown);
+            depthBuffer = new double[ClientSize.Width, ClientSize.Height];
+            for (int x = 0; x < ClientSize.Width; x++)
+            {
+                for (int y = 0; y < ClientSize.Height; y++)
+                {
+                    depthBuffer[x, y] = double.MaxValue;
+                }
+            }
             clearScene();
+
 
         }
 
@@ -78,26 +106,48 @@ namespace lab6
 
         public void clearScene()
         {
+            ClearDepthBuffer();
             g.Clear(Color.White);
-            figures.Clear();
-            linse = null;
             pictureBox1.Invalidate();
         }
-
+        private void ApplyTransformationToFigure(Shape shape, double[,] transformationMatrix)
+        {
+            foreach (var face in shape.Faces)
+            {
+                foreach (var line in face.Edges)
+                {
+                    line.start = ApplyMatrix(transformationMatrix, line.start);
+                    line.end = ApplyMatrix(transformationMatrix, line.end);
+                }
+            }
+        }
         public void redraw()
         {
             clearScene();
-            if (figure != null) { draw(figure); }
+            double[,] viewMatrix = camera.GetViewMatrix();
+            figures = figures.OrderBy(f => f.GetAverageZ()).ToList();
+            ClearDepthBuffer();
+            for (int i = 0;  i < figures.Count(); i++)
+            {
+                if (figures[i] != null)
+                {
+                    ApplyTransformationToFigure(figures[i], viewMatrix);
+                    if (useZBuffer)
+                    {                
+                        drawWithZBuffer(figures[i]);
+                    }
+                    else
+                    {
+                        draw(figures[i]);
+                    }
+                }
+            }
             if (linse != null && linse.start != null && linse.end != null)
             {
                 Pen pen = new Pen(Color.Black, 3);
                 drawLine(linse, pen);
             }
-            /*foreach (var fig in figures)
-            {
-                draw(fig);
-            }*/
-
+            pictureBox1.Invalidate();
         }
 
         private void draw(Shape figure)
@@ -108,7 +158,7 @@ namespace lab6
         // Рисует выбранную фигуру
         private void button1_Click(object sender, EventArgs e)
         {
-            clearScene();
+            // clearScene();
             draw();
             if (linse != null && linse.start != null && linse.end != null)
             {
@@ -129,6 +179,7 @@ namespace lab6
                 case 4: figure = Dodecahedron.getDodecahedron(); drawShape(figure); figures.Add(figure); break;
                 default: figure = Hexahedron.getHexahedron(); drawShape(figure); figures.Add(figure); break;
             }
+            pictureBox1.Invalidate();
         }
 
         void drawShape(Shape shape)
@@ -148,15 +199,137 @@ namespace lab6
         {
             foreach (var line in face.Edges)
             {
-                drawLine(line, pen);
+                 drawLine(line, pen);
             }
         }
-
+        
         void drawLine(Line line, Pen pen)
         {
             g.DrawLine(pen, line.start.project(), line.end.project());
         }
 
+        private void drawWithZBuffer(Shape shape)
+        {
+            shape.calcNormals();
+            foreach (var face in shape.Faces)
+            {
+                if (checkBox2.Checked) 
+                {
+                    if (Vector.scalar(face.normal, viewVector) > 0)
+                    {
+                        Pen pen = new Pen(Color.Black, 3);
+                        drawFaceWithZBuffer(face, pen, shape.GetAverageZ());
+                    }
+                }
+                else
+                {
+                    Pen pen = new Pen(Color.Black, 3);
+                    drawFaceWithZBuffer(face, pen, shape.GetAverageZ());
+                }
+            }
+        }
+
+        private void drawFaceWithZBuffer(Face face, Pen pen, double avgz)
+        {
+            PointF[] points = new PointF[face.Edges.Count];
+
+            for (int i = 0; i < face.Edges.Count; i++)
+            {
+                points[i] = face.Edges[i].start.project();
+            }
+            double minY = points.Min(p => p.Y);
+            double maxY = points.Max(p => p.Y);
+
+            for (int y = (int)minY; y <= maxY; y++)
+            {
+                List<int> intersections = new List<int>();
+
+                for (int i = 0; i < points.Length; i++)
+                {
+                    int next = (i + 1) % points.Length;
+
+                    if ((points[i].Y <= y && points[next].Y > y) || (points[i].Y > y && points[next].Y <= y))
+                    {
+                        float t = (y - points[i].Y) / (points[next].Y - points[i].Y);
+                        intersections.Add((int)(points[i].X + t * (points[next].X - points[i].X)));
+                    }
+                }
+
+                intersections.Sort();
+
+                for (int i = 0; i < intersections.Count - 1; i += 2)
+                {
+                    double startX = Math.Max(0, intersections[i]);
+                    double endX = Math.Min(g.ClipBounds.Width - 1, intersections[i + 1]);
+
+                    if (endX >= startX)
+                    {
+                        int x1 = (int)Math.Abs(startX);
+                        int x2 = (int)Math.Abs(endX);
+                        for (int x = (int)startX; x <= endX; x++)
+                        {                        
+                            if (avgz < depthBuffer[x, y])
+                            {
+                                depthBuffer[x, y] = avgz;
+                            }                            
+                        }
+                    }
+                }
+            }
+
+            foreach (var line in face.Edges)
+            {
+                drawLineWithZBuffer(line, avgz);
+            }
+        }
+
+        private void drawLineWithZBuffer(Line line, double avgz)
+        {
+            PointF startPoint = line.start.project();
+            PointF endPoint = line.end.project();
+
+            float x1 = startPoint.X;
+            float y1 = startPoint.Y;
+            float x2 = endPoint.X;
+            float y2 = endPoint.Y;
+
+            for (int t = 0; t <= 100; t++)
+            {
+                float x = x1 + t / 100.0f * (x2 - x1);
+                float y = y1 + t / 100.0f * (y2 - y1);
+
+                double z = avgz;
+
+                if (CheckDepth((int)Math.Abs(x), (int)y, Math.Abs(z)))
+                {
+                    g.DrawLine(pen, x, y, x + 1, y + 1);
+                }
+            }
+        }
+
+        private void ClearDepthBuffer()
+        {
+            for (int x = 0; x < ClientSize.Width; x++)
+            {
+                for (int y = 0; y < ClientSize.Height; y++)
+                {
+                    depthBuffer[x, y] = double.MaxValue;
+                }
+            }
+        }
+
+        private bool CheckDepth(int x, int y, double z)
+        {
+            if (true)
+            {
+                if (z <= depthBuffer[x, y])
+                {
+                    depthBuffer[x, y] = z;
+                    return true;
+                }
+            }
+            return false;
+        }
 
         private void radioButton2_MouseClick(object sender, MouseEventArgs e)
         {
@@ -226,6 +399,7 @@ namespace lab6
                     newPoint[i] += pointArray[j] * matrix[j, i];
             return new Point(newPoint[0], newPoint[1], newPoint[2]);
         }
+
         // Метод для поворота 3D фигуры
         private void Rotate(double angleX, double angleY, double angleZ)
         {
@@ -546,31 +720,10 @@ namespace lab6
         }
 
 
-        private Point ConvertScreenTo3D(int screenX, int screenY)
-        {
-            return new Point(screenX, screenY, 0);
-        }
 
         private void pictureBox1_MouseDown(object sender, MouseEventArgs e)
         {
-            //int mouseX = e.X;
-            //int mouseY = e.Y;
-
-            //Point clickedPoint = ConvertScreenTo3D(mouseX, mouseY);
-
-            //if (firstPoint == null)
-            //{
-            //    firstPoint = clickedPoint;
-            //}
-            //else
-            //{
-            //    secondPoint = clickedPoint;
-            //    linse = new Line(firstPoint, secondPoint);
-            //    Pen pen = new Pen(Color.Black, 3);
-            //    drawLine(linse, pen);
-            //    pictureBox1.Invalidate();
-            //    firstPoint = null;
-            //}
+           
         }
 
         private void RotateShapeAroundLine(Point point1, Point point2, double angleDegrees)
@@ -724,10 +877,6 @@ namespace lab6
         }
 
 
-        double SinCos(double x, double y)
-        {
-            return Math.Sin(x) + Math.Cos(y);
-        }
 
         static double EvaluateExpression(string expression, double x, double y)
         {
@@ -768,6 +917,7 @@ namespace lab6
             g.FillEllipse(Brushes.Black, e.Location.X - 5, e.Location.Y - 5, 5, 5);
             pictureBox1.Invalidate();
         }
+
         // соединяем точки в многоугольник по кнопке draw
         private void button16_Click(object sender, EventArgs e)
         {
@@ -795,59 +945,63 @@ namespace lab6
             redraw();
         }
 
-        private void textBox23_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label26_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label25_Click(object sender, EventArgs e)
-        {
-
-        }
-
         private void button18_Click(object sender, EventArgs e)
         {
             double x = double.Parse(textBox22.Text);
             double y = double.Parse(textBox23.Text);
             double z = double.Parse(textBox24.Text);
+            camera.Position = new Point(x, y, z);
             this.viewVector = (new Vector(x, y, z)).normalize();
         }
 
+        private void button19_Click(object sender, EventArgs e)
+        {
+            double rotateX = double.Parse(textBox28.Text);
+            double rotateY = double.Parse(textBox29.Text);
+            double rotateZ = double.Parse(textBox30.Text);
+            camera.RotateCamera(rotateX, rotateY, rotateZ);
+            double offsetX = double.Parse(textBox25.Text);
+            double offsetY = double.Parse(textBox26.Text);
+            double offsetZ = double.Parse(textBox27.Text);
 
-        /*private void loadButton_Click(object sender, EventArgs e)
-{
-   if (openFileDialog1.ShowDialog() == DialogResult.OK)
-   {
-       string fName = openFileDialog1.FileName;
-       if (File.Exists(fName))
-       {
-           using (FileStream fs = new FileStream(fName, FileMode.Open))
-           {
-               BinaryFormatter formatter = new BinaryFormatter();
-               figure = (Shape)formatter.Deserialize(fs);
-           }
-           redraw();
-       }
-   }
-}
+            camera.MoveCamera(offsetX, offsetY, offsetZ);
+            redraw();
+        }
 
-private void saveButton_Click(object sender, EventArgs e)
-{
-   if (saveFileDialog1.ShowDialog() == DialogResult.OK)
-   {
-       string fName = saveFileDialog1.FileName;
-       using (FileStream fs = new FileStream(fName, FileMode.Create))
-       {
-           BinaryFormatter formatter = new BinaryFormatter();
-           formatter.Serialize(fs, figure);
-       }
-   }
-}*/
+
+        private void checkBox1_CheckedChanged(object sender, EventArgs e)
+        {
+            if (checkBox1.Checked)
+            {
+                checkBox2 = new CheckBox();
+                checkBox2.Text = "Грани?";
+                checkBox2.Location = new System.Drawing.Point(checkBox1.Location.X, checkBox1.Location.Y + checkBox1.Height + 10);
+                this.Controls.Add(checkBox2);
+                checkBox2.Checked = true;
+            }
+            else
+            {
+                if (checkBox2 != null)
+                {
+                    this.Controls.Remove(checkBox2);
+                    checkBox2.Dispose();
+                    checkBox2 = null;
+                }
+            }
+            if (checkBox1.Checked)
+            {
+                useZBuffer = true;
+                clearScene();
+                redraw();
+            }
+            else
+            {
+                useZBuffer = false;
+                clearScene();
+                redraw();
+            }
+            
+        }
 
     }
 }
