@@ -20,6 +20,8 @@ namespace lab6
         Vector viewVector = new Vector(0, 0, -1);
         private List<PointF> points = new List<PointF>();
         Pen pen = new Pen(Color.Black, 2);
+        private double[,] depthBuffer;
+        private bool useZBuffer = false;
 
         Line linse;
         private class Section
@@ -56,6 +58,14 @@ namespace lab6
             numericUpDown4.Maximum = 200;
             Point.worldCenter = new PointF(pictureBox1.Width / 2, pictureBox1.Height / 2);
             pictureBox1.MouseDown += new MouseEventHandler(pictureBox1_MouseDown);
+            depthBuffer = new double[ClientSize.Width, ClientSize.Height];
+            for (int x = 0; x < ClientSize.Width; x++)
+            {
+                for (int y = 0; y < ClientSize.Height; y++)
+                {
+                    depthBuffer[x, y] = double.MaxValue;
+                }
+            }
             clearScene();
 
         }
@@ -78,26 +88,48 @@ namespace lab6
 
         public void clearScene()
         {
+            ClearDepthBuffer();
             g.Clear(Color.White);
-            figures.Clear();
-            linse = null;
             pictureBox1.Invalidate();
         }
-
+        private void ApplyTransformationToFigure(Shape shape, double[,] transformationMatrix)
+        {
+            foreach (var face in shape.Faces)
+            {
+                foreach (var line in face.Edges)
+                {
+                    line.start = ApplyMatrix(transformationMatrix, line.start);
+                    line.end = ApplyMatrix(transformationMatrix, line.end);
+                }
+            }
+        }
         public void redraw()
         {
             clearScene();
-            if (figure != null) { draw(figure); }
+            // double[,] viewMatrix = camera.GetViewMatrix();
+            figures = figures.OrderBy(f => f.GetAverageZ()).ToList();
+            ClearDepthBuffer();
+            for (int i = 0; i < figures.Count(); i++)
+            {
+                if (figures[i] != null)
+                {
+                    // ApplyTransformationToFigure(figures[i], viewMatrix);
+                    if (useZBuffer)
+                    {
+                        drawWithZBuffer(figures[i]);
+                    }
+                    else
+                    {
+                        draw(figures[i]);
+                    }
+                }
+            }
             if (linse != null && linse.start != null && linse.end != null)
             {
                 Pen pen = new Pen(Color.Black, 3);
                 drawLine(linse, pen);
             }
-            /*foreach (var fig in figures)
-            {
-                draw(fig);
-            }*/
-
+            pictureBox1.Invalidate();
         }
 
         private void draw(Shape figure)
@@ -156,7 +188,123 @@ namespace lab6
         {
             g.DrawLine(pen, line.start.project(), line.end.project());
         }
+        private void drawWithZBuffer(Shape shape)
+        {
+            shape.calcNormals();
+            foreach (var face in shape.Faces)
+            {
+                if (Vector.scalar(face.normal, viewVector) > 0)
+                {
+                    Pen pen = new Pen(Color.Black, 3);
+                    drawFaceWithZBuffer(face, pen);
+                }
+            }
+        }
+        private void drawFaceWithZBuffer(Face face, Pen pen)
+        {
+            PointF p1 = face.Edges[0].start.project();
+            double p1z = face.Edges[0].start.Z;
+            for (var i = 1; i < face.Edges.Count - 1; i++)
+            {
+                PointF p2 = face.Edges[i].start.project();
+                double p2z = face.Edges[i].start.Z;
+                PointF p3 = face.Edges[i].end.project();
+                double p3z = face.Edges[i].end.Z;
+                double x1 = p1.X, x2 = p2.X, x3 = p3.X;
+                double y1 = p1.Y, y2 = p2.Y, y3 = p3.Y;
 
+
+                double minX = Math.Max(Math.Min(x1, Math.Min(x2, x3)), 0);
+                double minY = Math.Max(Math.Min(y1, Math.Min(y2, y3)), 0);
+                double maxX = Math.Min(Math.Max(x1, Math.Max(x2, x3)), pictureBox1.Width);
+                double maxY = Math.Min(Math.Max(y1, Math.Max(y2, y3)), pictureBox1.Height);
+                double maxZ = Math.Max(p2z, Math.Max(p1z, p3z));
+
+                double floorMinX = Math.Floor(minX);
+                double floorMinY = Math.Floor(minY);
+                double floorMaxX = Math.Floor(maxX);
+                double floorMaxY = Math.Floor(maxY);
+
+
+                for (int y = (int)floorMinY; y <= floorMaxY; y++)
+                {
+                    for (int x = (int)floorMinX; x <= floorMaxX; x++)
+                    {
+
+                        double w1 = ((y2 - y3) * (x - x3) + (x3 - x2) * (y - y3)) / ((y2 - y3) * (x1 - x3) + (x3 - x2) * (y1 - y3));
+                        double w2 = ((y3 - y1) * (x - x3) + (x1 - x3) * (y - y3)) / ((y2 - y3) * (x1 - x3) + (x3 - x2) * (y1 - y3));
+                        double w3 = 1 - w1 - w2;
+
+                        if (w1 >= 0 && w2 >= 0 && w3 >= 0)
+                        {
+                            double depth = Math.Ceiling(w1 * p1z + w2 * p2z + w3 * p3z + 2);
+                            if (depth <= depthBuffer[x, y])
+                            {
+                                depthBuffer[x, y] = depth;
+                            }
+
+                        }
+                    }
+                }
+            }
+            foreach (var line in face.Edges)
+            {
+                drawLineWithZBuffer(line);
+            }
+        }
+
+
+        private void drawLineWithZBuffer(Line line)
+        {
+            PointF startPoint = line.start.project();
+            PointF endPoint = line.end.project();
+
+            float x1 = startPoint.X;
+            float y1 = startPoint.Y;
+            float x2 = endPoint.X;
+            float y2 = endPoint.Y;
+
+            double z1 = line.start.Z;
+            double z2 = line.end.Z;
+
+            for (int t = 0; t <= 100; t++)
+            {
+                float x = x1 + t / 100.0f * (x2 - x1);
+                float y = y1 + t / 100.0f * (y2 - y1);
+
+                double z = z1 + t / 100.0f * (z2 - z1);
+
+                if (CheckDepth((int)x, (int)y, Math.Floor(z)))
+                {
+                    g.DrawLine(pen, x, y, x + 1, y + 1);
+                }
+                else { Console.WriteLine(); }
+            }
+        }
+
+        private void ClearDepthBuffer()
+        {
+            for (int x = 0; x < ClientSize.Width; x++)
+            {
+                for (int y = 0; y < ClientSize.Height; y++)
+                {
+                    depthBuffer[x, y] = double.MaxValue;
+                }
+            }
+        }
+
+        private bool CheckDepth(int x, int y, double z)
+        {
+            if (x < ClientSize.Width && y < ClientSize.Height && x >= 0 && y >= 0)
+            {
+                if (z <= depthBuffer[x, y])
+                {
+                    depthBuffer[x, y] = z;
+                    return true;
+                }
+            }
+            return false;
+        }
 
         private void radioButton2_MouseClick(object sender, MouseEventArgs e)
         {
@@ -816,6 +964,22 @@ namespace lab6
             double y = double.Parse(textBox23.Text);
             double z = double.Parse(textBox24.Text);
             this.viewVector = (new Vector(x, y, z)).normalize();
+        }
+
+        private void checkBox1_CheckedChanged(object sender, EventArgs e)
+        {
+            if (checkBox1.Checked)
+            {
+                useZBuffer = true;
+                clearScene();
+                redraw();
+            }
+            else
+            {
+                useZBuffer = false;
+                clearScene();
+                redraw();
+            }
         }
 
 

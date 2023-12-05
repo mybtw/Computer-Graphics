@@ -111,6 +111,7 @@
             label26 = new Label();
             label27 = new Label();
             button18 = new Button();
+            checkBox1 = new CheckBox();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)numericUpDown1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)numericUpDown2).BeginInit();
@@ -851,11 +852,23 @@
             button18.UseVisualStyleBackColor = true;
             button18.Click += button18_Click;
             // 
+            // checkBox1
+            // 
+            checkBox1.AutoSize = true;
+            checkBox1.Location = new System.Drawing.Point(1001, 235);
+            checkBox1.Name = "checkBox1";
+            checkBox1.Size = new Size(89, 24);
+            checkBox1.TabIndex = 63;
+            checkBox1.Text = "Z-буфер";
+            checkBox1.UseVisualStyleBackColor = true;
+            checkBox1.CheckedChanged += checkBox1_CheckedChanged;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1165, 763);
+            Controls.Add(checkBox1);
             Controls.Add(button18);
             Controls.Add(label27);
             Controls.Add(label26);
@@ -1035,5 +1048,6 @@
         private Label label26;
         private Label label27;
         private Button button18;
+        private CheckBox checkBox1;
     }
 }
