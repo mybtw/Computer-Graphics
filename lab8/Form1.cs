@@ -7,6 +7,7 @@ using Expression = NCalc.Expression;
 using MathNet.Numerics.LinearAlgebra;
 using System.Drawing;
 using System.Net;
+using System.Numerics;
 
 namespace lab6
 {
@@ -140,7 +141,7 @@ namespace lab6
                     {
                         draw(figures[i]);
                     }
-                }
+                } 
             }
             if (linse != null && linse.start != null && linse.end != null)
             {
@@ -218,72 +219,71 @@ namespace lab6
                     if (Vector.scalar(face.normal, viewVector) > 0)
                     {
                         Pen pen = new Pen(Color.Black, 3);
-                        drawFaceWithZBuffer(face, pen, shape.GetAverageZ());
+                        drawFaceWithZBuffer(face, pen);
                     }
                 }
                 else
                 {
                     Pen pen = new Pen(Color.Black, 3);
-                    drawFaceWithZBuffer(face, pen, shape.GetAverageZ());
+                    drawFaceWithZBuffer(face, pen);
                 }
             }
         }
-
-        private void drawFaceWithZBuffer(Face face, Pen pen, double avgz)
+        private void drawFaceWithZBuffer(Face face, Pen pen)
         {
-            PointF[] points = new PointF[face.Edges.Count];
-
-            for (int i = 0; i < face.Edges.Count; i++)
+            PointF p1 = face.Edges[0].start.project();
+            double p1z = face.Edges[0].start.Z;
+            for (var i = 1; i < face.Edges.Count - 1; i++)
             {
-                points[i] = face.Edges[i].start.project();
-            }
-            double minY = points.Min(p => p.Y);
-            double maxY = points.Max(p => p.Y);
+                PointF p2 = face.Edges[i].start.project();
+                double p2z = face.Edges[i].start.Z;
+                PointF p3 = face.Edges[i].end.project();
+                double p3z = face.Edges[i].end.Z;
+                double x1 = p1.X, x2 = p2.X, x3 = p3.X;
+                double y1 = p1.Y, y2 = p2.Y, y3 = p3.Y;
 
-            for (int y = (int)minY; y <= maxY; y++)
-            {
-                List<int> intersections = new List<int>();
+               
+                double minX = Math.Max(Math.Min(x1, Math.Min(x2, x3)), 0);
+                double minY = Math.Max(Math.Min(y1, Math.Min(y2, y3)), 0);
+                double maxX = Math.Min(Math.Max(x1, Math.Max(x2, x3)), pictureBox1.Width);
+                double maxY = Math.Min(Math.Max(y1, Math.Max(y2, y3)), pictureBox1.Height);
+                double maxZ = Math.Max(p2z, Math.Max(p1z,p3z));
 
-                for (int i = 0; i < points.Length; i++)
+                double floorMinX = Math.Floor(minX);
+                double floorMinY = Math.Floor(minY);
+                double floorMaxX = Math.Floor(maxX);
+                double floorMaxY = Math.Floor(maxY);
+
+                
+                for (int y = (int)floorMinY; y <= floorMaxY; y++)
                 {
-                    int next = (i + 1) % points.Length;
-
-                    if ((points[i].Y <= y && points[next].Y > y) || (points[i].Y > y && points[next].Y <= y))
+                    for (int x = (int)floorMinX; x <= floorMaxX; x++)
                     {
-                        float t = (y - points[i].Y) / (points[next].Y - points[i].Y);
-                        intersections.Add((int)(points[i].X + t * (points[next].X - points[i].X)));
-                    }
-                }
 
-                intersections.Sort();
+                        double w1 = ((y2 - y3) * (x - x3) + (x3 - x2) * (y - y3)) / ((y2 - y3) * (x1 - x3) + (x3 - x2) * (y1 - y3));
+                        double w2 = ((y3 - y1) * (x - x3) + (x1 - x3) * (y - y3)) / ((y2 - y3) * (x1 - x3) + (x3 - x2) * (y1 - y3));
+                        double w3 = 1 - w1 - w2;
 
-                for (int i = 0; i < intersections.Count - 1; i += 2)
-                {
-                    double startX = Math.Max(0, intersections[i]);
-                    double endX = Math.Min(g.ClipBounds.Width - 1, intersections[i + 1]);
-
-                    if (endX >= startX)
-                    {
-                        int x1 = (int)Math.Abs(startX);
-                        int x2 = (int)Math.Abs(endX);
-                        for (int x = (int)startX; x <= endX; x++)
-                        {                        
-                            if (avgz < depthBuffer[x, y])
+                        if (w1 >= 0 && w2 >= 0 && w3 >= 0)
+                        {
+                            double depth = Math.Ceiling(w1 * p1z + w2 * p2z + w3 * p3z + 2);
+                            if (depth <= depthBuffer[x, y])
                             {
-                                depthBuffer[x, y] = avgz;
-                            }                            
+                                depthBuffer[x, y] = depth;
+                            }
+
                         }
                     }
                 }
             }
-
             foreach (var line in face.Edges)
             {
-                drawLineWithZBuffer(line, avgz);
+                drawLineWithZBuffer(line);
             }
         }
+        
 
-        private void drawLineWithZBuffer(Line line, double avgz)
+        private void drawLineWithZBuffer(Line line)
         {
             PointF startPoint = line.start.project();
             PointF endPoint = line.end.project();
@@ -293,17 +293,21 @@ namespace lab6
             float x2 = endPoint.X;
             float y2 = endPoint.Y;
 
+            double z1 = line.start.Z;
+            double z2 = line.end.Z;
+
             for (int t = 0; t <= 100; t++)
             {
                 float x = x1 + t / 100.0f * (x2 - x1);
                 float y = y1 + t / 100.0f * (y2 - y1);
 
-                double z = avgz;
+                double z = z1 + t / 100.0f * (z2 - z1);
 
-                if (CheckDepth((int)Math.Abs(x), (int)y, Math.Abs(z)))
+                if (CheckDepth((int)x, (int)y, Math.Floor(z)))
                 {
                     g.DrawLine(pen, x, y, x + 1, y + 1);
                 }
+                else { Console.WriteLine(); }
             }
         }
 
@@ -320,7 +324,7 @@ namespace lab6
 
         private bool CheckDepth(int x, int y, double z)
         {
-            if (true)
+            if (x < ClientSize.Width && y < ClientSize.Height && x >= 0 && y >= 0)
             {
                 if (z <= depthBuffer[x, y])
                 {
@@ -330,6 +334,61 @@ namespace lab6
             }
             return false;
         }
+
+        //private void drawFaceWithZBuffer(Face face, Pen pen)
+        //{
+        //    Point[] points = new Point[face.Edges.Count];
+
+        //    for (int i = 0; i < face.Edges.Count; i++)
+        //    {
+        //        points[i] = face.Edges[i].start;
+        //    }
+        //    double minY = points.Min(p => p.Y);
+        //    double maxY = points.Max(p => p.Y);
+
+        //    for (int y = (int)minY; y <= maxY; y++)
+        //    {
+        //        List<int> intersections = new List<int>();
+
+        //        for (int i = 0; i < points.Length; i++)
+        //        {
+        //            int next = (i + 1) % points.Length;
+
+        //            if ((points[i].Y <= y && points[next].Y > y) || (points[i].Y > y && points[next].Y <= y))
+        //            {
+        //                double t = (y - points[i].Y) / (points[next].Y - points[i].Y);
+        //                intersections.Add((int)(points[i].X + t * (points[next].X - points[i].X)));
+        //            }
+        //        }
+
+        //        intersections.Sort();
+
+        //        for (int i = 0; i < intersections.Count - 1; i += 2)
+        //        {
+        //            double startX = Math.Max(0, intersections[i]);
+        //            double endX = Math.Min(g.ClipBounds.Width - 1, intersections[i + 1]);
+
+        //            if (endX >= startX)
+        //            {
+        //                int x1 = (int)Math.Abs(startX);
+        //                int x2 = (int)Math.Abs(endX);
+        //                for (int x = (int)startX; x <= endX; x++)
+        //                {                        
+        //                    if (0 < depthBuffer[x, y])
+        //                    {
+        //                        depthBuffer[x, y] = 0;
+        //                    }                            
+        //                }
+        //            }
+        //        }
+        //    }
+
+        //    foreach (var line in face.Edges)
+        //    {
+        //        drawLineWithZBuffer(line, 0);
+        //    }
+        //}
+
 
         private void radioButton2_MouseClick(object sender, MouseEventArgs e)
         {
