@@ -1010,7 +1010,7 @@ namespace lab6
             double y = double.Parse(textBox23.Text);
             double z = double.Parse(textBox24.Text);
             camera.Position = new Point(x, y, z);
-            this.viewVector = (new Vector(x, y, z)).normalize();
+            this.viewVector = -1 * (new Vector(x, y, z)).normalize();
         }
 
         private void button19_Click(object sender, EventArgs e)
