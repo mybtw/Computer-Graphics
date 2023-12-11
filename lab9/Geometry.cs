@@ -339,12 +339,13 @@ namespace lab6
         // перемножил их в CCW, получил вектор нормали
         List<Line> edges;
         public Vector normal { get; set; }
-
+        public Color cc { get; set; }
 
         public Face()
         {
             edges = new List<Line>();
             normal = new Vector(0, 0, 0);
+            cc = Color.FromArgb(0, 0 , 0, 0);
         }
 
         public Face(IEnumerable<Line> edges) : this()
@@ -395,6 +396,7 @@ namespace lab6
     {
         private List<Point> points = new List<Point>();
         private List<Line> edges = new List<Line>();
+        public Bitmap bitmap { get; set; }
 
         public void addPoint(Point point)
         {

@@ -8,6 +8,8 @@ using MathNet.Numerics.LinearAlgebra;
 using System.Drawing;
 using System.Net;
 using System.Numerics;
+using System.Drawing.Design;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace lab6
 {
@@ -124,22 +126,22 @@ namespace lab6
         {
             clearScene();
             double[,] viewMatrix = camera.GetViewMatrix();
-            figures = figures.OrderBy(f => f.GetAverageZ()).ToList();
+            figures = figures.OrderByDescending(f => f.GetAverageZ()).ToList();
             ClearDepthBuffer();
-            for (int i = 0;  i < figures.Count(); i++)
+            for (int i = 0; i < figures.Count(); i++)
             {
                 if (figures[i] != null)
                 {
                     ApplyTransformationToFigure(figures[i], viewMatrix);
                     if (useZBuffer)
-                    {                
+                    {
                         drawWithZBuffer(figures[i]);
                     }
                     else
                     {
                         draw(figures[i]);
                     }
-                } 
+                }
             }
             if (linse != null && linse.start != null && linse.end != null)
             {
@@ -165,18 +167,26 @@ namespace lab6
                 drawLine(linse, pen);
             }
         }
-
+        private void SetColorToFigure(Shape figure)
+        {
+            Random random = new Random();
+            foreach (var face in figure.Faces)
+            {
+                face.cc = Color.FromArgb(random.Next(256), random.Next(256), random.Next(256)); ;
+            }
+        }
 
         public void draw()
         {
+
             switch (comboBox1.SelectedIndex)
             {
-                case 0: figure = Tetrahedron.getTetrahedron(); drawShape(figure); figures.Add(figure); break;
-                case 1: figure = Hexahedron.getHexahedron(); drawShape(figure); figures.Add(figure); break;
-                case 2: figure = Octahedron.getOctahedron(); drawShape(figure); figures.Add(figure); break;
-                case 3: figure = Icosahedron.getIcosahedron(); drawShape(figure); figures.Add(figure); break;
-                case 4: figure = Dodecahedron.getDodecahedron(); drawShape(figure); figures.Add(figure); break;
-                default: figure = Hexahedron.getHexahedron(); drawShape(figure); figures.Add(figure); break;
+                case 0: figure = Tetrahedron.getTetrahedron(); SetColorToFigure(figure); drawShape(figure); figures.Add(figure); break;
+                case 1: figure = Hexahedron.getHexahedron(); SetColorToFigure(figure); drawShape(figure); figures.Add(figure); break;
+                case 2: figure = Octahedron.getOctahedron(); SetColorToFigure(figure); drawShape(figure); figures.Add(figure); break;
+                case 3: figure = Icosahedron.getIcosahedron(); SetColorToFigure(figure); drawShape(figure); figures.Add(figure); break;
+                case 4: figure = Dodecahedron.getDodecahedron(); SetColorToFigure(figure); drawShape(figure); figures.Add(figure); break;
+                default: figure = Hexahedron.getHexahedron(); SetColorToFigure(figure); drawShape(figure); figures.Add(figure); break;
             }
             pictureBox1.Invalidate();
         }
@@ -192,29 +202,150 @@ namespace lab6
                     {
                         Pen pen = new Pen(Color.Black, 3);
                         drawFace(face, pen);
+                        if (shape.bitmap != null)
+                        {
+                            texturizeTheFace(face, shape.bitmap);
+                        }
                     }
                 }
             }
             else
             {
-                    foreach (var face in shape.Faces)
-                    {
-                        Pen pen = new Pen(Color.Black, 3);
-                        drawFace(face, pen);
-
-                    }
+                foreach (var face in shape.Faces)
+                {
+                    Pen pen = new Pen(Color.Black, 3);
+                    drawFace(face, pen);
+                    
+                }
 
             }
         }
+        void texturizeTheFace(Face face, Bitmap texture) {
+            PointF[] points = new PointF[face.Edges.Count];
+
+            for (int i = 0; i < face.Edges.Count; i++)
+            {
+                points[i] = face.Edges[i].start.project();
+            }
+            double minY = points.Min(p => p.Y);
+            double maxY = points.Max(p => p.Y);
+
+            for (int y = (int)minY; y <= maxY; y++)
+            {
+                List<double> intersections = new List<double>();
+
+                for (int i = 0; i < points.Length; i++)
+                {
+                    int next = (i + 1) % points.Length;
+
+                    if ((points[i].Y <= y && points[next].Y > y) || (points[i].Y > y && points[next].Y <= y))
+                    {
+                        double t = (y - points[i].Y) / (points[next].Y - points[i].Y);
+                        double intersectionX = points[i].X + t * (points[next].X - points[i].X);
+                        intersections.Add(intersectionX);
+                    }
+                }
+
+                intersections.Sort();
+
+                for (int i = 0; i < intersections.Count - 1; i += 2)
+                {
+                    double startX = Math.Max(0, intersections[i]);
+                    double endX = Math.Min(g.ClipBounds.Width - 1, intersections[i + 1]);
+
+                    if (endX >= startX)
+                    {
+                        for (int x = (int)startX; x <= endX; x++)
+                        {
+                            // Интерполяция текстурных координат
+                            double t = (x - startX) / (endX - startX);
+                            double interpolatedU = t * texture.Width;
+                            double interpolatedV = (y - minY) / (maxY - minY) * texture.Height;
+
+                            // Установка цвета из текстуры
+                            if (interpolatedU > 0 && interpolatedU < texture.Width && interpolatedV < texture.Height && interpolatedV > 0 && pictureBox1.Height > y && pictureBox1.Width > x) {
+                                bmp.SetPixel(x, y, texture.GetPixel((int)interpolatedU, (int)interpolatedV));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        //void texturizeTheFace(Face face, Bitmap texture)
+        //{
+        //    PointF p1 = face.Edges[0].start.project();
+        //    double p1z = face.Edges[0].start.Z;
+
+        //    // Вычислите ширину и высоту треугольника
+        //    double triangleWidth = Math.Max(p1.X, Math.Max(face.Edges[1].start.project().X, face.Edges[1].end.project().X)) -
+        //                           Math.Min(p1.X, Math.Min(face.Edges[1].start.project().X, face.Edges[1].end.project().X));
+        //    double triangleHeight = Math.Max(p1.Y, Math.Max(face.Edges[1].start.project().Y, face.Edges[1].end.project().Y)) -
+        //                            Math.Min(p1.Y, Math.Min(face.Edges[1].start.project().Y, face.Edges[1].end.project().Y));
+
+        //    double textureScaleX = triangleWidth / texture.Width;
+        //    double textureScaleY = triangleHeight / texture.Height;
+
+        //    for (var i = 1; i < face.Edges.Count - 1; i++)
+        //    {
+        //        PointF p2 = face.Edges[i].start.project();
+        //        double p2z = face.Edges[i].start.Z;
+        //        PointF p3 = face.Edges[i].end.project();
+        //        double p3z = face.Edges[i].end.Z;
+        //        double x1 = p1.X, x2 = p2.X, x3 = p3.X;
+        //        double y1 = p1.Y, y2 = p2.Y, y3 = p3.Y;
+
+
+        //        double minX = Math.Max(Math.Min(x1, Math.Min(x2, x3)), 0);
+        //        double minY = Math.Max(Math.Min(y1, Math.Min(y2, y3)), 0);
+        //        double maxX = Math.Min(Math.Max(x1, Math.Max(x2, x3)), pictureBox1.Width);
+        //        double maxY = Math.Min(Math.Max(y1, Math.Max(y2, y3)), pictureBox1.Height);
+        //        double maxZ = Math.Max(p2z, Math.Max(p1z, p3z));
+
+        //        double floorMinX = Math.Floor(minX);
+        //        double floorMinY = Math.Floor(minY);
+        //        double floorMaxX = Math.Floor(maxX);
+        //        double floorMaxY = Math.Floor(maxY);
+
+
+        //        for (int y = (int)floorMinY; y <= floorMaxY; y++)
+        //        {
+        //            for (int x = (int)floorMinX; x <= floorMaxX; x++)
+        //            {
+        //                double w1 = ((y2 - y3) * (x - x3) + (x3 - x2) * (y - y3)) / ((y2 - y3) * (x1 - x3) + (x3 - x2) * (y1 - y3));
+        //                double w2 = ((y3 - y1) * (x - x3) + (x1 - x3) * (y - y3)) / ((y2 - y3) * (x1 - x3) + (x3 - x2) * (y1 - y3));
+        //                double w3 = 1 - w1 - w2;
+
+        //                if (w1 >= 0 && w2 >= 0 && w3 >= 0)
+        //                {
+        //                    double depth = Math.Ceiling(w1 * p1z + w2 * p2z + w3 * p3z + 2);
+        //                    if (depth < depthBuffer[x, y] && pictureBox1.Width > x && pictureBox1.Height > y)
+        //                    {
+        //                        // Интерполяция текстурных координат
+        //                        double interpolatedU = w1 * p1.X + w2 * p2.X + w3 * p3.X;
+        //                        double interpolatedV = w1 * p1.Y + w2 * p2.Y + w3 * p3.Y;
+
+        //                        // Преобразование текстурных координат для масштабирования и сдвига
+        //                        int texX = (int)((interpolatedU / textureScaleX) % texture.Width);
+        //                        int texY = (int)((interpolatedV / textureScaleY) % texture.Height);
+
+        //                        // Установка цвета из текстуры
+        //                        depthBuffer[x, y] = depth;
+        //                        bmp.SetPixel(x, y, texture.GetPixel(texX, texY));
+        //                    }
+        //                }
+        //            }
+        //        }
+        //    }
+        //}
 
         void drawFace(Face face, Pen pen)
         {
             foreach (var line in face.Edges)
             {
-                 drawLine(line, pen);
+                drawLine(line, pen);
             }
         }
-        
+
         void drawLine(Line line, Pen pen)
         {
             g.DrawLine(pen, line.start.project(), line.end.project());
@@ -225,13 +356,13 @@ namespace lab6
             shape.calcNormals();
             foreach (var face in shape.Faces)
             {
-                if (checkBox2.Checked) 
+                if (checkBox2.Checked)
                 {
-                   if (Vector.scalar(face.normal, viewVector) > 0)
-                   {
+                    if (Vector.scalar(face.normal, viewVector) > 0)
+                    {
                         Pen pen = new Pen(Color.Black, 3);
                         drawFaceWithZBuffer(face, pen);
-                   }
+                    }
                 }
                 else
                 {
@@ -244,6 +375,7 @@ namespace lab6
         {
             PointF p1 = face.Edges[0].start.project();
             double p1z = face.Edges[0].start.Z;
+
             for (var i = 1; i < face.Edges.Count - 1; i++)
             {
                 PointF p2 = face.Edges[i].start.project();
@@ -253,19 +385,19 @@ namespace lab6
                 double x1 = p1.X, x2 = p2.X, x3 = p3.X;
                 double y1 = p1.Y, y2 = p2.Y, y3 = p3.Y;
 
-               
+
                 double minX = Math.Max(Math.Min(x1, Math.Min(x2, x3)), 0);
                 double minY = Math.Max(Math.Min(y1, Math.Min(y2, y3)), 0);
                 double maxX = Math.Min(Math.Max(x1, Math.Max(x2, x3)), pictureBox1.Width);
                 double maxY = Math.Min(Math.Max(y1, Math.Max(y2, y3)), pictureBox1.Height);
-                double maxZ = Math.Max(p2z, Math.Max(p1z,p3z));
+                double maxZ = Math.Max(p2z, Math.Max(p1z, p3z));
 
                 double floorMinX = Math.Floor(minX);
                 double floorMinY = Math.Floor(minY);
                 double floorMaxX = Math.Floor(maxX);
                 double floorMaxY = Math.Floor(maxY);
 
-                
+
                 for (int y = (int)floorMinY; y <= floorMaxY; y++)
                 {
                     for (int x = (int)floorMinX; x <= floorMaxX; x++)
@@ -278,47 +410,15 @@ namespace lab6
                         if (w1 >= 0 && w2 >= 0 && w3 >= 0)
                         {
                             double depth = Math.Ceiling(w1 * p1z + w2 * p2z + w3 * p3z + 2);
-                            if (depth <= depthBuffer[x, y])
+                            if (depth < depthBuffer[x, y] && pictureBox1.Width > x && pictureBox1.Height > y)
                             {
                                 depthBuffer[x, y] = depth;
+                                bmp.SetPixel(x, y, face.cc);
                             }
 
                         }
                     }
                 }
-            }
-            foreach (var line in face.Edges)
-            {
-                drawLineWithZBuffer(line);
-            }
-        }
-        
-
-        private void drawLineWithZBuffer(Line line)
-        {
-            PointF startPoint = line.start.project();
-            PointF endPoint = line.end.project();
-
-            float x1 = startPoint.X;
-            float y1 = startPoint.Y;
-            float x2 = endPoint.X;
-            float y2 = endPoint.Y;
-
-            double z1 = line.start.Z;
-            double z2 = line.end.Z;
-
-            for (int t = 0; t <= 100; t++)
-            {
-                float x = x1 + t / 100.0f * (x2 - x1);
-                float y = y1 + t / 100.0f * (y2 - y1);
-
-                double z = z1 + t / 100.0f * (z2 - z1);
-
-                if (CheckDepth((int)x, (int)y, Math.Floor(z)))
-                {
-                    g.DrawLine(pen, x, y, x + 1, y + 1);
-                }
-                else { Console.WriteLine(); }
             }
         }
 
@@ -331,19 +431,6 @@ namespace lab6
                     depthBuffer[x, y] = double.MaxValue;
                 }
             }
-        }
-
-        private bool CheckDepth(int x, int y, double z)
-        {
-            if (x < ClientSize.Width && y < ClientSize.Height && x >= 0 && y >= 0)
-            {
-                if (z <= depthBuffer[x, y])
-                {
-                    depthBuffer[x, y] = z;
-                    return true;
-                }
-            }
-            return false;
         }
 
         //private void drawFaceWithZBuffer(Face face, Pen pen)
@@ -393,13 +480,7 @@ namespace lab6
         //            }
         //        }
         //    }
-
-        //    foreach (var line in face.Edges)
-        //    {
-        //        drawLineWithZBuffer(line, 0);
-        //    }
         //}
-
 
         private void radioButton2_MouseClick(object sender, MouseEventArgs e)
         {
@@ -793,7 +874,7 @@ namespace lab6
 
         private void pictureBox1_MouseDown(object sender, MouseEventArgs e)
         {
-           
+
         }
 
         private void RotateShapeAroundLine(Point point1, Point point2, double angleDegrees)
@@ -1071,7 +1152,7 @@ namespace lab6
         private double Distance(PointF p1, PointF p2) => Math.Sqrt((p1.X - p2.X) * (p1.X - p2.X) + (p1.Y - p2.Y) * (p1.Y - p2.Y));
         private void button21_Click(object sender, EventArgs e)
         {
-            
+
             float x0 = float.Parse(textBox14.Text);
             float x1 = float.Parse(textBox13.Text);
             float y0 = float.Parse(textBox15.Text);
@@ -1142,7 +1223,7 @@ namespace lab6
 
         private void checkBox1_CheckedChanged(object sender, EventArgs e)
         {
-              if (checkBox1.Checked)
+            if (checkBox1.Checked)
             {
                 useZBuffer = true;
                 clearScene();
@@ -1154,8 +1235,20 @@ namespace lab6
                 clearScene();
                 redraw();
             }
-            
+
         }
 
+        private void button20_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "Изображения|*.jpg;*.png;*.bmp;*.gif|Все файлы|*.*";
+            if (openFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                 Bitmap loadedImage = new Bitmap(openFileDialog.FileName);
+                MessageBox.Show("Изображение загружено успешно!");
+                figures[figures.Count - 1].bitmap = loadedImage;
+                redraw();
+            }     
+        }
     }
 }
