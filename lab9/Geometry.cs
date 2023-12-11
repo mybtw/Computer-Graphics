@@ -10,8 +10,125 @@ using MathNet.Numerics.LinearAlgebra;
 
 namespace lab6
 {
+    class Camera
+    {
+        public Point Position { get; set; } = new Point(0, 0, 0);
+        //public Point Focus { get; set; } = new Point(0, 0, 0);
+        public PointF Offset { get; set; } = new PointF(0, 0);
+        public double AngleX { get; set; } = 0;
+        public double AngleY { get; set; } = 0;
+        public double AngleZ { get; set; } = 0;
+
+
+        public void MoveCamera(double dx, double dy, double dz)
+        {
+            Position = new Point(dx, dy, dz);
+            //Focus = new Point(dx, dy, 1000);
+        }
+
+        public void RotateCamera(double ax, double ay, double az)
+        {
+            AngleX = ax;
+            AngleY = ay;
+            AngleZ = az;
+
+            if (AngleX > 360) AngleX -= 360;
+            else if (AngleX < 0) AngleX += 360;
+
+            if (AngleY > 360) AngleY -= 360;
+            else if (AngleY < 0) AngleY += 360;
+
+            if (AngleZ > 360) AngleZ -= 360;
+            else if (AngleZ < 0) AngleZ += 360;
+
+            // При поворотах обновим координаты Focus
+            double radianX = AngleX * Math.PI / 180.0;
+            double radianY = AngleY * Math.PI / 180.0;
+            double radianZ = AngleZ * Math.PI / 180.0;
+
+            // Здесь можно использовать уже обновленные углы для вычисления новых координат Focus
+            //Focus.X = Position.X + (int)(1000 * Math.Sin(radianX) * Math.Cos(radianY));
+            //Focus.Y = Position.Y + (int)(1000 * Math.Sin(radianX) * Math.Sin(radianY));
+            //Focus.Z = Position.Z + (int)(1000 * Math.Cos(radianX));
+        }
+        public double[,] GetViewMatrix()
+        {
+            double[,] translationMatrix = new double[4, 4]
+            {
+        {1, 0, 0, 0},
+        {0, 1, 0, 0},
+        {0, 0, 1, 0},
+        {-Position.X, -Position.Y, -Position.Z, 1}
+            };
+
+            double cosX = Math.Cos(AngleX * Math.PI / 180);
+            double sinX = Math.Sin(AngleX * Math.PI / 180);
+
+            double cosY = Math.Cos(AngleY * Math.PI / 180);
+            double sinY = Math.Sin(AngleY * Math.PI / 180);
+
+            double cosZ = Math.Cos(AngleZ * Math.PI / 180);
+            double sinZ = Math.Sin(AngleZ * Math.PI / 180);
+
+            double[,] rotationMatrixX = new double[4, 4]
+            {
+        {1, 0, 0, 0},
+        {0, cosX, -sinX, 0},
+        {0, sinX, cosX, 0},
+        {0, 0, 0, 1}
+            };
+
+            double[,] rotationMatrixY = new double[4, 4]
+            {
+        {cosY, 0, sinY, 0},
+        {0, 1, 0, 0},
+        {-sinY, 0, cosY, 0},
+        {0, 0, 0, 1}
+            };
+
+            double[,] rotationMatrixZ = new double[4, 4]
+            {
+        {cosZ, -sinZ, 0, 0},
+        {sinZ, cosZ, 0, 0},
+        {0, 0, 1, 0},
+        {0, 0, 0, 1}
+            };
+
+            double[,] viewMatrix = MatrixMultiply(rotationMatrixX, rotationMatrixY);
+            viewMatrix = MatrixMultiply(viewMatrix, rotationMatrixZ);
+            viewMatrix = MatrixMultiply(viewMatrix, translationMatrix);
+
+            return viewMatrix;
+        }
+
+        private double[,] MatrixMultiply(double[,] matrix1, double[,] matrix2)
+        {
+            int rows1 = matrix1.GetLength(0);
+            int cols1 = matrix1.GetLength(1);
+            int rows2 = matrix2.GetLength(0);
+            int cols2 = matrix2.GetLength(1);
+
+            double[,] result = new double[rows1, cols2];
+
+            for (int i = 0; i < rows1; i++)
+            {
+                for (int j = 0; j < cols2; j++)
+                {
+                    result[i, j] = 0;
+                    for (int k = 0; k < cols1; k++)
+                    {
+                        result[i, j] += matrix1[i, k] * matrix2[k, j];
+                    }
+                }
+            }
+
+            return result;
+        }
+
+    }
     public enum Projection { PERSPECTIVE, AXONOMETRIC }
     [Serializable]
+
     class Point
     {
         double x, y, z;
@@ -47,13 +164,6 @@ namespace lab6
                     {0, 1, 0},
                     {0, 0, 0}
         });
-
-        //public Point(int x, int y, int z)
-        //{
-        //    this.x = x;
-        //    this.y = y;
-        //    this.z = z;
-        //}
 
         public Point(double x, double y, double z)
         {
@@ -98,6 +208,11 @@ namespace lab6
         public static Point operator +(Point a, Point b)
         {
             return new Point(a.X + b.X, a.Y + b.Y, a.Z + b.Z);
+        }
+
+        public static Point operator *(Point a, int x)
+        {
+            return new Point(a.X * x, a.Y * x, a.Z * x);
         }
     }
 
@@ -278,6 +393,26 @@ namespace lab6
     [Serializable]
     class Shape
     {
+        private List<Point> points = new List<Point>();
+        private List<Line> edges = new List<Line>();
+
+        public void addPoint(Point point)
+        {
+            points.Add(point);
+        }
+
+        public Point getLastPoint()
+        {
+            if (points.Count > 0)
+                return points[points.Count - 1];
+            else
+                throw new InvalidOperationException("The shape does not contain any points.");
+        }
+
+        public void addEdge(Line edge)
+        {
+            edges.Add(edge);
+        }
         List<Face> faces;
 
         public Shape()
@@ -320,6 +455,8 @@ namespace lab6
 
             return sumZ / vertexCount;
         }
+
+
         public List<Face> Faces { get => faces; }
 
     }
@@ -399,34 +536,98 @@ namespace lab6
         public static Icosahedron getIcosahedron()
         {
             Icosahedron res = new Icosahedron();
-            Point circleCenter = new Point(100, 100, 100);
-            List<Point> circlePoints = new List<Point>();
-            for (int angle = 0; angle < 360; angle += 36)
-            {
-                if (angle % 72 == 0)
-                {
-                    circlePoints.Add(new Point(circleCenter.X + (100 * Math.Cos(Funcs.degreesToRadians(angle))), circleCenter.Y + 100, circleCenter.Z + (100 * Math.Sin(Funcs.degreesToRadians(angle)))));
-                    continue;
-                }
-                circlePoints.Add(new Point(circleCenter.X + (100 * Math.Cos(Funcs.degreesToRadians(angle))), circleCenter.Y, circleCenter.Z + (100 * Math.Sin(Funcs.degreesToRadians(angle)))));
-            }
-            Point a = new Point(100, 50, 100);
-            Point b = new Point(100, 250, 100);
-            for (int i = 0; i < 10; i++)
-            {
-                res.addFace(new Face().addEdge(new Line(circlePoints[i], circlePoints[(i + 1) % 10])).addEdge(new Line(circlePoints[(i + 1) % 10], circlePoints[(i + 2) % 10])).addEdge(new Line(circlePoints[(i + 2) % 10], circlePoints[i])));
-            }
-            res.addFace(new Face().addEdge(new Line(circlePoints[1], a)).addEdge(new Line(a, circlePoints[3])).addEdge(new Line(circlePoints[3], circlePoints[1])));
-            res.addFace(new Face().addEdge(new Line(circlePoints[3], a)).addEdge(new Line(a, circlePoints[5])).addEdge(new Line(circlePoints[5], circlePoints[3])));
-            res.addFace(new Face().addEdge(new Line(circlePoints[5], a)).addEdge(new Line(a, circlePoints[7])).addEdge(new Line(circlePoints[7], circlePoints[5])));
-            res.addFace(new Face().addEdge(new Line(circlePoints[7], a)).addEdge(new Line(a, circlePoints[9])).addEdge(new Line(circlePoints[9], circlePoints[7])));
-            res.addFace(new Face().addEdge(new Line(circlePoints[9], a)).addEdge(new Line(a, circlePoints[1])).addEdge(new Line(circlePoints[1], circlePoints[9])));
+            /* Point circleCenter = new Point(100, 100, 100);
+             List<Point> circlePoints = new List<Point>();
+             for (int angle = 0; angle < 360; angle += 36)
+             {
+                 if (angle % 72 == 0)
+                 {
+                     circlePoints.Add(new Point(circleCenter.X + (100 * Math.Cos(Funcs.degreesToRadians(angle))), circleCenter.Y + 100, circleCenter.Z + (100 * Math.Sin(Funcs.degreesToRadians(angle)))));
+                     continue;
+                 }
+                 circlePoints.Add(new Point(circleCenter.X + (100 * Math.Cos(Funcs.degreesToRadians(angle))), circleCenter.Y, circleCenter.Z + (100 * Math.Sin(Funcs.degreesToRadians(angle)))));
+             }
+             Point a = new Point(100, 50, 100);
+             Point b = new Point(100, 250, 100);
+             for (int i = 0; i < 10; i++)
+             {
+                 res.addFace(new Face().addEdge(new Line(circlePoints[i], circlePoints[(i + 1) % 10])).addEdge(new Line(circlePoints[(i + 1) % 10], circlePoints[(i + 2) % 10])).addEdge(new Line(circlePoints[(i + 2) % 10], circlePoints[i])));
+             }
+             res.addFace(new Face().addEdge(new Line(circlePoints[1], a)).addEdge(new Line(a, circlePoints[3])).addEdge(new Line(circlePoints[3], circlePoints[1])));
+             res.addFace(new Face().addEdge(new Line(circlePoints[3], a)).addEdge(new Line(a, circlePoints[5])).addEdge(new Line(circlePoints[5], circlePoints[3])));
+             res.addFace(new Face().addEdge(new Line(circlePoints[5], a)).addEdge(new Line(a, circlePoints[7])).addEdge(new Line(circlePoints[7], circlePoints[5])));
+             res.addFace(new Face().addEdge(new Line(circlePoints[7], a)).addEdge(new Line(a, circlePoints[9])).addEdge(new Line(circlePoints[9], circlePoints[7])));
+             res.addFace(new Face().addEdge(new Line(circlePoints[9], a)).addEdge(new Line(a, circlePoints[1])).addEdge(new Line(circlePoints[1], circlePoints[9])));
 
-            res.addFace(new Face().addEdge(new Line(circlePoints[0], b)).addEdge(new Line(b, circlePoints[2])).addEdge(new Line(circlePoints[2], circlePoints[0])));
-            res.addFace(new Face().addEdge(new Line(circlePoints[2], b)).addEdge(new Line(b, circlePoints[4])).addEdge(new Line(circlePoints[4], circlePoints[2])));
-            res.addFace(new Face().addEdge(new Line(circlePoints[4], b)).addEdge(new Line(b, circlePoints[6])).addEdge(new Line(circlePoints[6], circlePoints[4])));
-            res.addFace(new Face().addEdge(new Line(circlePoints[6], b)).addEdge(new Line(b, circlePoints[8])).addEdge(new Line(circlePoints[8], circlePoints[6])));
-            res.addFace(new Face().addEdge(new Line(circlePoints[8], b)).addEdge(new Line(b, circlePoints[0])).addEdge(new Line(circlePoints[0], circlePoints[8])));
+             res.addFace(new Face().addEdge(new Line(circlePoints[0], b)).addEdge(new Line(b, circlePoints[2])).addEdge(new Line(circlePoints[2], circlePoints[0])));
+             res.addFace(new Face().addEdge(new Line(circlePoints[2], b)).addEdge(new Line(b, circlePoints[4])).addEdge(new Line(circlePoints[4], circlePoints[2])));
+             res.addFace(new Face().addEdge(new Line(circlePoints[4], b)).addEdge(new Line(b, circlePoints[6])).addEdge(new Line(circlePoints[6], circlePoints[4])));
+             res.addFace(new Face().addEdge(new Line(circlePoints[6], b)).addEdge(new Line(b, circlePoints[8])).addEdge(new Line(circlePoints[8], circlePoints[6])));
+             res.addFace(new Face().addEdge(new Line(circlePoints[8], b)).addEdge(new Line(b, circlePoints[0])).addEdge(new Line(circlePoints[0], circlePoints[8])));*/
+
+            Point A = new Point(140, 74, 0);
+            Point A1 = new Point(140, -74, 0);
+            Point A2 = new Point(-140, -74, 0);
+            Point A3 = new Point(-140, 74, 0);
+
+            Point B = new Point(74, 0, 140);
+            Point B1 = new Point(-74, 0, 140);
+            Point B2 = new Point(-74, 0, -140);
+            Point B3 = new Point(74, 0, -140);
+
+            Point C = new Point(0, 140, 74);
+            Point C1 = new Point(0, -140, 74);
+            Point C2 = new Point(0, -140, -74);
+            Point C3 = new Point(0, 140, -74);
+
+
+
+            // шапка
+            // a2 b1 a3
+            res.addFace(new Face().addEdge(new Line(A2, B1)).addEdge(new Line(B1, A3)).addEdge(new Line(A3, A2)));
+            // c1 b1 a2
+            res.addFace(new Face().addEdge(new Line(C1, B1)).addEdge(new Line(B1, A2)).addEdge(new Line(A2, C1)));
+            // b b1 c1
+            res.addFace(new Face().addEdge(new Line(B, B1)).addEdge(new Line(B1, C1)).addEdge(new Line(C1, B)));
+            // c b1 b
+            res.addFace(new Face().addEdge(new Line(C, B1)).addEdge(new Line(B1, B)).addEdge(new Line(B, C)));
+            // a3 b1 c
+            res.addFace(new Face().addEdge(new Line(A3, B1)).addEdge(new Line(B1, C)).addEdge(new Line(C, A3)));
+
+            //барабан
+
+            // a c b
+            res.addFace(new Face().addEdge(new Line(A, C)).addEdge(new Line(C, B)).addEdge(new Line(B, A)));
+            // c3 c a
+            res.addFace(new Face().addEdge(new Line(C3, C)).addEdge(new Line(C, A)).addEdge(new Line(A, C3)));
+            //c3 a3 c
+            res.addFace(new Face().addEdge(new Line(C3, A3)).addEdge(new Line(A3, C)).addEdge(new Line(C, C3)));
+            //b2 a3 c3
+            res.addFace(new Face().addEdge(new Line(B2, A3)).addEdge(new Line(A3, C3)).addEdge(new Line(C3, B2)));
+            //b2 a2 a3
+            res.addFace(new Face().addEdge(new Line(B2, A2)).addEdge(new Line(A2, A3)).addEdge(new Line(A3, B2)));
+            //c2 a2 b2
+            res.addFace(new Face().addEdge(new Line(C2, A2)).addEdge(new Line(A2, B2)).addEdge(new Line(B2, C2)));
+            //c2 c1 a2
+            res.addFace(new Face().addEdge(new Line(C2, C1)).addEdge(new Line(C1, A2)).addEdge(new Line(A2, C2)));
+            //a1 c1 c2
+            res.addFace(new Face().addEdge(new Line(A1, C1)).addEdge(new Line(C1, C2)).addEdge(new Line(C2, A1)));
+            //a1 b c1
+            res.addFace(new Face().addEdge(new Line(A1, B)).addEdge(new Line(B, C1)).addEdge(new Line(C1, A1)));
+            // a b a1
+            res.addFace(new Face().addEdge(new Line(A, B)).addEdge(new Line(B, A1)).addEdge(new Line(A1, A)));
+
+            // шапка
+            //с3 b3 b2
+            res.addFace(new Face().addEdge(new Line(C3, B3)).addEdge(new Line(B3, B2)).addEdge(new Line(B2, C3)));
+            //a b3 c3
+            res.addFace(new Face().addEdge(new Line(A, B3)).addEdge(new Line(B3, C3)).addEdge(new Line(C3, A)));
+            //a1 b3 a
+            res.addFace(new Face().addEdge(new Line(A1, B3)).addEdge(new Line(B3, A)).addEdge(new Line(A, A1)));
+            //c2 b3 a1
+            res.addFace(new Face().addEdge(new Line(C2, B3)).addEdge(new Line(B3, A1)).addEdge(new Line(A1, C2)));
+            //b2 b3 c2
+            res.addFace(new Face().addEdge(new Line(B2, B3)).addEdge(new Line(B3, C2)).addEdge(new Line(C2, B2)));
             return res;
         }
 
@@ -437,28 +638,65 @@ namespace lab6
         public static Dodecahedron getDodecahedron() // 12 граней
         {
             Dodecahedron res = new Dodecahedron();
-            var icosahedron = Icosahedron.getIcosahedron();
-            List<Point> centers = new List<Point>();
-            for (int i = 0; i < icosahedron.Faces.Count; i++)
-            {
-                Face face = icosahedron.Faces[i];
-                var c = face.getCenter();
-                centers.Add(c);
-            }
 
-            res.addFace(new Face().addEdge(new Line(centers[0], centers[1])).addEdge(new Line(centers[1], centers[2])).addEdge(new Line(centers[2], centers[16])).addEdge(new Line(centers[16], centers[15])).addEdge(new Line(centers[15], centers[0])));
-            res.addFace(new Face().addEdge(new Line(centers[1], centers[2])).addEdge(new Line(centers[2], centers[3])).addEdge(new Line(centers[3], centers[11])).addEdge(new Line(centers[11], centers[10])).addEdge(new Line(centers[10], centers[1])));
-            res.addFace(new Face().addEdge(new Line(centers[2], centers[3])).addEdge(new Line(centers[3], centers[4])).addEdge(new Line(centers[4], centers[17])).addEdge(new Line(centers[17], centers[16])).addEdge(new Line(centers[16], centers[2])));
-            res.addFace(new Face().addEdge(new Line(centers[3], centers[4])).addEdge(new Line(centers[4], centers[5])).addEdge(new Line(centers[5], centers[12])).addEdge(new Line(centers[12], centers[11])).addEdge(new Line(centers[11], centers[3])));
-            res.addFace(new Face().addEdge(new Line(centers[4], centers[5])).addEdge(new Line(centers[5], centers[6])).addEdge(new Line(centers[6], centers[18])).addEdge(new Line(centers[18], centers[17])).addEdge(new Line(centers[17], centers[4])));
-            res.addFace(new Face().addEdge(new Line(centers[5], centers[6])).addEdge(new Line(centers[6], centers[7])).addEdge(new Line(centers[7], centers[13])).addEdge(new Line(centers[13], centers[12])).addEdge(new Line(centers[12], centers[5])));
-            res.addFace(new Face().addEdge(new Line(centers[6], centers[7])).addEdge(new Line(centers[7], centers[8])).addEdge(new Line(centers[8], centers[19])).addEdge(new Line(centers[19], centers[18])).addEdge(new Line(centers[18], centers[6])));
-            res.addFace(new Face().addEdge(new Line(centers[7], centers[8])).addEdge(new Line(centers[8], centers[9])).addEdge(new Line(centers[9], centers[14])).addEdge(new Line(centers[14], centers[13])).addEdge(new Line(centers[13], centers[7])));
-            res.addFace(new Face().addEdge(new Line(centers[8], centers[9])).addEdge(new Line(centers[9], centers[0])).addEdge(new Line(centers[0], centers[15])).addEdge(new Line(centers[15], centers[19])).addEdge(new Line(centers[19], centers[8])));
-            res.addFace(new Face().addEdge(new Line(centers[9], centers[0])).addEdge(new Line(centers[0], centers[1])).addEdge(new Line(centers[1], centers[10])).addEdge(new Line(centers[10], centers[14])).addEdge(new Line(centers[14], centers[9])));
-            res.addFace(new Face().addEdge(new Line(centers[15], centers[16])).addEdge(new Line(centers[16], centers[17])).addEdge(new Line(centers[17], centers[18])).addEdge(new Line(centers[18], centers[19])).addEdge(new Line(centers[19], centers[15])));
-            res.addFace(new Face().addEdge(new Line(centers[10], centers[11])).addEdge(new Line(centers[11], centers[12])).addEdge(new Line(centers[12], centers[13])).addEdge(new Line(centers[13], centers[14])).addEdge(new Line(centers[14], centers[10])));
+            Point A = new Point((1 / (Math.Sqrt(5) - 1)), (1 / (Math.Sqrt(5) - 1)), (1 / (Math.Sqrt(5) - 1))) * 100;
+            Point B = new Point((1 / (Math.Sqrt(5) - 1)), (1 / (Math.Sqrt(5) - 1)), (-1 / (Math.Sqrt(5) - 1))) * 100;
+            Point C = new Point(((1) / (Math.Sqrt(5) - 1)) * 100, ((-1) / (Math.Sqrt(5) - 1)) * 100, ((1) / (Math.Sqrt(5) - 1)) * 100);
+            Point D = new Point(((1) / (Math.Sqrt(5) - 1)) * 100, ((-1) / (Math.Sqrt(5) - 1)) * 100, ((-1) / (Math.Sqrt(5) - 1)) * 100);
+            Point E = new Point(((-1) / (Math.Sqrt(5) - 1)) * 100, ((1) / (Math.Sqrt(5) - 1)) * 100, ((1) / (Math.Sqrt(5) - 1)) * 100);
+            Point F = new Point(((-1) / (Math.Sqrt(5) - 1)), ((1) / (Math.Sqrt(5) - 1)), ((-1) / (Math.Sqrt(5) - 1))) * 100;
+            Point G = new Point(((-1) / (Math.Sqrt(5) - 1)), ((-1) / (Math.Sqrt(5) - 1)), ((1) / (Math.Sqrt(5) - 1))) * 100;
+            Point H = new Point(((-1) / (Math.Sqrt(5) - 1)), ((-1) / (Math.Sqrt(5) - 1)), ((-1) / (Math.Sqrt(5) - 1))) * 100;
+            Point I = new Point(0, ((((1) / (((Math.Sqrt(5) + 1) / (2))))) / (Math.Sqrt(5) - 1)), ((((Math.Sqrt(5) + 1) / (2))) / (Math.Sqrt(5) - 1))) * 100;
+            Point J = new Point(0, ((((1) / (((Math.Sqrt(5) + 1) / (2))))) / (Math.Sqrt(5) - 1)), ((-((Math.Sqrt(5) + 1) / (2))) / (Math.Sqrt(5) - 1))) * 100;
+            Point K = new Point(0, ((((-1) / (((Math.Sqrt(5) + 1) / (2))))) / (Math.Sqrt(5) - 1)), ((-((Math.Sqrt(5) + 1) / (2))) / (Math.Sqrt(5) - 1))) * 100;
+            Point L = new Point(0, ((((-1) / (((Math.Sqrt(5) + 1) / (2))))) / (Math.Sqrt(5) - 1)), ((((Math.Sqrt(5) + 1) / (2))) / (Math.Sqrt(5) - 1))) * 100;
+            Point M = new Point(((((1) / (((Math.Sqrt(5) + 1) / (2))))) / (Math.Sqrt(5) - 1)), ((((Math.Sqrt(5) + 1) / (2))) / (Math.Sqrt(5) - 1)), 0) * 100;
+            Point N = new Point(((((-1) / (((Math.Sqrt(5) + 1) / (2))))) / (Math.Sqrt(5) - 1)), ((((Math.Sqrt(5) + 1) / (2))) / (Math.Sqrt(5) - 1)), 0) * 100;
+            Point O = new Point(((((1) / (((Math.Sqrt(5) + 1) / (2))))) / (Math.Sqrt(5) - 1)), -((((Math.Sqrt(5) + 1) / (2))) / (Math.Sqrt(5) - 1)), 0) * 100;
+            Point P = new Point(((((-1) / (((Math.Sqrt(5) + 1) / (2))))) / (Math.Sqrt(5) - 1)), -((((Math.Sqrt(5) + 1) / (2))) / (Math.Sqrt(5) - 1)), 0) * 100;
+            Point Q = new Point(((((Math.Sqrt(5) + 1) / (2))) / (Math.Sqrt(5) - 1)), 0, ((((1) / (((Math.Sqrt(5) + 1) / (2))))) / (Math.Sqrt(5) - 1))) * 100;
+            Point R = new Point(((-((Math.Sqrt(5) + 1) / (2))) / (Math.Sqrt(5) - 1)), 0, ((((1) / (((Math.Sqrt(5) + 1) / (2))))) / (Math.Sqrt(5) - 1))) * 100;
+            Point S = new Point(((((Math.Sqrt(5) + 1) / (2))) / (Math.Sqrt(5) - 1)), 0, ((((-1) / (((Math.Sqrt(5) + 1) / (2))))) / (Math.Sqrt(5) - 1))) * 100;
+            Point T = new Point(-((((Math.Sqrt(5) + 1) / (2))) / (Math.Sqrt(5) - 1)), 0, ((((-1) / (((Math.Sqrt(5) + 1) / (2))))) / (Math.Sqrt(5) - 1))) * 100;
 
+
+            //Polygon(S,Q,A,M,B)
+            // B M A Q S
+            res.addFace(new Face().addEdge(new Line(B, M)).addEdge(new Line(M, A)).addEdge(new Line(A, Q)).addEdge(new Line(Q, S)).addEdge(new Line(S, B)));
+            // Polygon(D, S, Q, C, O)
+            // D S Q C O
+            res.addFace(new Face().addEdge(new Line(D, S)).addEdge(new Line(S, Q)).addEdge(new Line(Q, C)).addEdge(new Line(C, O)).addEdge(new Line(O, D)));
+            //Polygon(D,K,J,B,S)
+            //J B S D K
+            res.addFace(new Face().addEdge(new Line(J, B)).addEdge(new Line(B, S)).addEdge(new Line(S, D)).addEdge(new Line(D, K)).addEdge(new Line(K, J)));
+            //Polygon(B,J,F,N,M)
+            // F N M B J
+            res.addFace(new Face().addEdge(new Line(F, N)).addEdge(new Line(N, M)).addEdge(new Line(M, B)).addEdge(new Line(B, J)).addEdge(new Line(J, F)));
+            //Polygon(A, I, E, N, M)
+            //N E I A M
+            res.addFace(new Face().addEdge(new Line(N, E)).addEdge(new Line(E, I)).addEdge(new Line(I, A)).addEdge(new Line(A, M)).addEdge(new Line(M, N)));
+            //Polygon(C,Q,A,I,L)
+            // A I L C Q
+            res.addFace(new Face().addEdge(new Line(A, I)).addEdge(new Line(I, L)).addEdge(new Line(L, C)).addEdge(new Line(C, Q)).addEdge(new Line(Q, A)));
+            //Polygon(E,R,G,L,I)
+            // E R G L I
+            res.addFace(new Face().addEdge(new Line(E, R)).addEdge(new Line(R, G)).addEdge(new Line(G, L)).addEdge(new Line(L, I)).addEdge(new Line(I, E)));
+            //Polygon(R,T,F,N,E)
+            // T R E N F
+            res.addFace(new Face().addEdge(new Line(T, R)).addEdge(new Line(R, E)).addEdge(new Line(E, N)).addEdge(new Line(N, F)).addEdge(new Line(F, T)));
+            //Polygon(T,H,P,G,R)
+            //H P G R T
+            res.addFace(new Face().addEdge(new Line(H, P)).addEdge(new Line(P, G)).addEdge(new Line(G, R)).addEdge(new Line(R, T)).addEdge(new Line(T, H)));
+            //Polygon(G,P,O,C,L)
+            // O C L G P
+            res.addFace(new Face().addEdge(new Line(O, C)).addEdge(new Line(C, L)).addEdge(new Line(L, G)).addEdge(new Line(G, P)).addEdge(new Line(P, O)));
+            //Polygon(T,F,J,K,H)
+            // T F J K H
+            res.addFace(new Face().addEdge(new Line(T, F)).addEdge(new Line(F, J)).addEdge(new Line(J, K)).addEdge(new Line(K, H)).addEdge(new Line(H, T)));
+            //Polygon(H, K, D, O, P)
+            // H K D O P
+            res.addFace(new Face().addEdge(new Line(H, K)).addEdge(new Line(K, D)).addEdge(new Line(D, O)).addEdge(new Line(O, P)).addEdge(new Line(P, H)));
             return res;
         }
 
